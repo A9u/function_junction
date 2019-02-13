@@ -25,6 +25,7 @@ type Category struct {
 }
 
 func (s *store) CreateCategory(ctx context.Context, category *Category) (err error) {
+/*
 	now := time.Now()
 
 	return Transact(ctx, s.db, &sql.TxOptions{}, func(ctx context.Context) error {
@@ -36,6 +37,7 @@ func (s *store) CreateCategory(ctx context.Context, category *Category) (err err
 		)
 		return err
 	})
+*/
 }
 
 func (s *store) ListCategories(ctx context.Context) (categories []Category, err error) {

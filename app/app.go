@@ -3,13 +3,13 @@ package app
 import (
 	"time"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/go-mgo/mgo"
 	"github.com/joshsoftware/golang-boilerplate/config"
 	"go.uber.org/zap"
 )
 
 var (
-	db     *sqlx.DB
+	db     *mgo.Session
 	logger *zap.SugaredLogger
 )
 
@@ -33,25 +33,24 @@ func InitLogger() {
 
 func initDB() (err error) {
 	dbConfig := config.Database()
-
-	db, err = sqlx.Open(dbConfig.Driver(), dbConfig.ConnectionURL())
+	db, err = mgo.Dial(dbConfig.ConnectionURL())
 	if err != nil {
-		return
+	  return
 	}
 
 	if err = db.Ping(); err != nil {
-		return
+	  return
 	}
 
-	db.SetMaxIdleConns(dbConfig.MaxPoolSize())
-	db.SetMaxOpenConns(dbConfig.MaxOpenConns())
-	db.SetConnMaxLifetime(time.Duration(dbConfig.MaxLifeTimeMins()) * time.Minute)
+	// db.SetMaxIdleConns(dbConfig.MaxPoolSize())
+	// db.SetMaxOpenConns(dbConfig.MaxOpenConns())
+	// db.SetConnMaxLifetime(time.Duration(dbConfig.MaxLifeTimeMins()) * time.Minute)
 
 	return
 }
 
-func GetDB() *sqlx.DB {
-	return db
+func GetDB() *mgo.Session {
+ 	return db
 }
 
 func GetLogger() *zap.SugaredLogger {
@@ -60,5 +59,19 @@ func GetLogger() *zap.SugaredLogger {
 
 func Close() {
 	logger.Sync()
-	db.Close()
+		db.Close()
 }
+
+func GetCollection(dbname string, col string) *mgo.Collection {
+  return db.DB(dbname).C(col)
+}
+
+func Copy() *mgo.Session {
+  return &db.Copy()
+}
+
+// func(s *Session) Close() {
+//   if(s.session != nil) {
+//     s.session.Close()
+//   }
+// }

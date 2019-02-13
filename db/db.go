@@ -9,12 +9,14 @@ import (
 	"github.com/pkg/errors"
 )
 
+/*
 type ctxKey int
 
 const (
 	dbKey          ctxKey = 0
 	defaultTimeout        = 1 * time.Second
 )
+*/
 
 type Storer interface {
 	// Category
@@ -26,9 +28,10 @@ type Storer interface {
 }
 
 type store struct {
-	db *sqlx.DB
+	db *mgo.Session
 }
 
+/*
 func newContext(ctx context.Context, tx *sqlx.Tx) context.Context {
 	return context.WithValue(ctx, dbKey, tx)
 }
@@ -72,8 +75,9 @@ func WithTimeout(ctx context.Context, timeout time.Duration, op func(ctx context
 func WithDefaultTimeout(ctx context.Context, op func(ctx context.Context) error) (err error) {
 	return WithTimeout(ctx, defaultTimeout, op)
 }
+*/
 
-func NewStorer(d *sqlx.DB) Storer {
+func NewStorer(d *mgo.Session) Storer {
 	return &store{
 		db: d,
 	}
