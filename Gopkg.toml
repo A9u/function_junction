@@ -30,8 +30,8 @@
   version = "1.7.0"
 
 [[constraint]]
-  name = "github.com/jmoiron/sqlx"
-  version = "1.2.0"
+  name = "github.com/globalsign/mgo"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/lib/pq"

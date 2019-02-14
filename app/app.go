@@ -1,15 +1,17 @@
 package app
 
 import (
-	"time"
-
-	"github.com/jmoiron/sqlx"
+	"fmt"
+	// "time"
+	"github.com/globalsign/mgo"
+	// "github.com/jmoiron/sqlx"
 	"github.com/joshsoftware/golang-boilerplate/config"
 	"go.uber.org/zap"
 )
 
 var (
-	db     *sqlx.DB
+	db     *mgo.Database
+	session *mgo.Session
 	logger *zap.SugaredLogger
 )
 
@@ -18,6 +20,7 @@ func Init() {
 
 	err := initDB()
 	if err != nil {
+		fmt.Println(err)
 		panic(err)
 	}
 }
@@ -34,23 +37,24 @@ func InitLogger() {
 func initDB() (err error) {
 	dbConfig := config.Database()
 
-	db, err = sqlx.Open(dbConfig.Driver(), dbConfig.ConnectionURL())
+	session, err = mgo.Dial(dbConfig.ConnectionURL())
+	fmt.Println(session)
 	if err != nil {
 		return
 	}
-
-	if err = db.Ping(); err != nil {
+	db = session.DB("function_junction")
+	if err = session.Ping(); err != nil {
 		return
 	}
 
-	db.SetMaxIdleConns(dbConfig.MaxPoolSize())
-	db.SetMaxOpenConns(dbConfig.MaxOpenConns())
-	db.SetConnMaxLifetime(time.Duration(dbConfig.MaxLifeTimeMins()) * time.Minute)
+	// db.SetMaxIdleConns(dbConfig.MaxPoolSize())
+	// db.SetMaxOpenConns(dbConfig.MaxOpenConns())
+	// db.SetConnMaxLifetime(time.Duration(dbConfig.MaxLifeTimeMins()) * time.Minute)
 
 	return
 }
 
-func GetDB() *sqlx.DB {
+func GetDB() *mgo.Database {
 	return db
 }
 
@@ -60,5 +64,5 @@ func GetLogger() *zap.SugaredLogger {
 
 func Close() {
 	logger.Sync()
-	db.Close()
+	session.Close()
 }
