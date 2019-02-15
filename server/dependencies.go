@@ -15,7 +15,7 @@ func initDependencies() (dependencies, error) {
 	logger := app.GetLogger()
 	dbStore := db.NewStorer(appDB)
 
-	categoryService := category.NewService(dbStore, logger)
+	categoryService := category.NewService(dbStore, logger, app.GetCollection("catagories"))
 
 	return dependencies{
 		CategoryService: categoryService,
