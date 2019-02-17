@@ -8,6 +8,7 @@ import (
 	"github.com/A9u/function_junction/category"
 	"github.com/A9u/function_junction/config"
 	"github.com/gorilla/mux"
+	"github.com/A9u/function_junction/event"
 )
 
 const (
@@ -28,6 +29,10 @@ func initRouter(dep dependencies) (router *mux.Router) {
 	router.HandleFunc("/categories/{category_id}", category.FindByID(dep.CategoryService)).Methods(http.MethodGet).Headers(versionHeader, v1)
 	router.HandleFunc("/categories/{category_id}", category.DeleteByID(dep.CategoryService)).Methods(http.MethodDelete).Headers(versionHeader, v1)
 	router.HandleFunc("/categories", category.Update(dep.CategoryService)).Methods(http.MethodPut).Headers(versionHeader, v1)
+
+	// Event
+	router.HandleFunc("/events", event.Create(dep.EventService)).Methods(http.MethodPost).Headers(versionHeader, v1)
+	router.HandleFunc("/events", event.List(dep.EventService)).Methods(http.MethodGet).Headers(versionHeader, v1)
 
 	sh := http.StripPrefix("/docs/", http.FileServer(http.Dir("./swaggerui/")))
 	router.PathPrefix("/docs/").Handler(sh)
