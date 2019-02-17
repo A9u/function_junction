@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	// "database/sql"
 	"time"
 
 	"github.com/mongodb/mongo-go-driver/mongo"
@@ -23,6 +22,9 @@ type Storer interface {
 	FindCategoryByID(ctx context.Context, id string) (category Category, err error)
 	DeleteCategoryByID(ctx context.Context, id string) (err error)
 	UpdateCategory(ctx context.Context, collection *mongo.Collection, filter *Category, category *Category) (err error)
+	// Events
+	CreateEvent(ctx context.Context, collection *mongo.Collection, event *Event) (err error)
+	ListEvents(ctx context.Context, collection *mongo.Collection) (events []*Event, err error)
 }
 
 type store struct {
