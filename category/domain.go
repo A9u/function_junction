@@ -1,10 +1,10 @@
 package category
 
-import "github.com/joshsoftware/golang-boilerplate/db"
+import "github.com/A9u/function_junction/db"
 
 type updateRequest struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
+	Name string      `json:"name"`
+	Type string      `json:"type"`
 	Set  db.Category `json:"$set"`
 }
 

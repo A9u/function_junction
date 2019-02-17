@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/mongodb/mongo-go-driver/mongo"
 
-	"github.com/joshsoftware/golang-boilerplate/db"
+	"github.com/A9u/function_junction/db"
 	"go.uber.org/zap"
 )
 
@@ -17,8 +17,8 @@ type Service interface {
 }
 
 type categoryService struct {
-	store  db.Storer
-	logger *zap.SugaredLogger
+	store      db.Storer
+	logger     *zap.SugaredLogger
 	collection *mongo.Collection
 }
 
@@ -59,7 +59,7 @@ func (cs *categoryService) update(ctx context.Context, c updateRequest) (err err
 		return
 	}
 
-	err = cs.store.UpdateCategory(ctx, cs.collection, &db.Category{Name: c.Name}, &db.Category{Name: c.Set.Name , Type: c.Set.Type})
+	err = cs.store.UpdateCategory(ctx, cs.collection, &db.Category{Name: c.Name}, &db.Category{Name: c.Set.Name, Type: c.Set.Type})
 	if err != nil {
 		cs.logger.Error("Error updating category", "err", err.Error(), "category", c)
 		return
@@ -99,8 +99,8 @@ func (cs *categoryService) deleteByID(ctx context.Context, id string) (err error
 
 func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection) Service {
 	return &categoryService{
-		store:  s,
-		logger: l,
+		store:      s,
+		logger:     l,
 		collection: c,
 	}
 }

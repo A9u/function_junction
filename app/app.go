@@ -2,18 +2,17 @@ package app
 
 import (
 	"context"
-	"time"
+	"github.com/A9u/function_junction/config"
 	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/joshsoftware/golang-boilerplate/config"
 	"go.uber.org/zap"
+	"time"
 )
 
 var (
 	db     *mongo.Database
-	client  *mongo.Client
+	client *mongo.Client
 	logger *zap.SugaredLogger
 	ctx    context.Context
-
 )
 
 func Init() {
@@ -37,16 +36,18 @@ func InitLogger() {
 func initDB() (err error) {
 	dbConfig := config.Database()
 	client, err := mongo.NewClient(dbConfig.ConnectionURL())
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 	err = client.Connect(ctx)
 	if err != nil {
 		return
 	}
-	db      =  client.Database("function_junction")
+	db = client.Database("function-junction")
 	// db, err = sqlx.Open(dbConfig.Driver(), dbConfig.ConnectionURL())
-	
+
 	if err = client.Ping(ctx, nil); err != nil {
 		return
 	}
@@ -57,7 +58,7 @@ func initDB() (err error) {
 
 	return
 }
-func GetCollection(name string) *mongo.Collection{
+func GetCollection(name string) *mongo.Collection {
 	collsection := db.Collection(name)
 	return collsection
 }

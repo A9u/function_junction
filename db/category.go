@@ -1,8 +1,8 @@
 package db
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 
 	// "database/sql"
 	"github.com/mongodb/mongo-go-driver/mongo"
@@ -24,8 +24,8 @@ const (
 
 type Category struct {
 	// ID        string    `db:"id"`
-	Name      string    `json:"name"`
-	Type      string    `json:"type"`
+	Name string `json:"name"`
+	Type string `json:"type"`
 	// CreatedAt time.Time `db:"created_at"`
 	// UpdatedAt time.Time `db:"updated_at"`
 }
@@ -42,7 +42,7 @@ func (s *store) CreateCategory(ctx context.Context, collection *mongo.Collection
 	// 		now,
 	// 		now,
 	// 	)
-		return err
+	return err
 	// })
 }
 
@@ -58,7 +58,7 @@ func (s *store) ListCategories(ctx context.Context, collection *mongo.Collection
 		var elem Category
 		err = cur.Decode(&elem)
 		categories = append(categories, &elem)
- 	}
+	}
 	if err := cur.Err(); err != nil {
 	}
 	return categories, err
@@ -84,7 +84,7 @@ func (s *store) DeleteCategoryByID(ctx context.Context, id string) (err error) {
 	// 	if err != nil {
 	// 		return err
 	// 	}
-		return err
+	return err
 	// })
 }
 
@@ -93,8 +93,8 @@ func (s *store) UpdateCategory(ctx context.Context, collection *mongo.Collection
 	// result := Category{}
 	// filter.Name = category.Name
 	// result,err = collection.FindOne(ctx, filter)
-	
-	_, err = collection.UpdateOne(ctx, bson.D{ {"name", filter.Name} }, bson.D{ {"$set", bson.D{ {"name", category.Name}, {"type", category.Type} }}})
+
+	_, err = collection.UpdateOne(ctx, bson.D{{"name", filter.Name}}, bson.D{{"$set", bson.D{{"name", category.Name}, {"type", category.Type}}}})
 
 	// now := time.Now()
 
@@ -105,6 +105,6 @@ func (s *store) UpdateCategory(ctx context.Context, collection *mongo.Collection
 	// 		now,
 	// 		category.ID,
 	// 	)
-		return err
+	return err
 	// })
 }

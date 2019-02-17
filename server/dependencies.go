@@ -1,9 +1,9 @@
 package server
 
 import (
-	"github.com/joshsoftware/golang-boilerplate/app"
-	"github.com/joshsoftware/golang-boilerplate/category"
-	"github.com/joshsoftware/golang-boilerplate/db"
+	"github.com/A9u/function_junction/app"
+	"github.com/A9u/function_junction/category"
+	"github.com/A9u/function_junction/db"
 )
 
 type dependencies struct {

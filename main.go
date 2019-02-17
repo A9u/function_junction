@@ -3,10 +3,10 @@ package main
 import (
 	"os"
 
-	"github.com/joshsoftware/golang-boilerplate/app"
-	"github.com/joshsoftware/golang-boilerplate/config"
-	"github.com/joshsoftware/golang-boilerplate/db"
-	"github.com/joshsoftware/golang-boilerplate/server"
+	"github.com/A9u/function_junction/app"
+	"github.com/A9u/function_junction/config"
+	"github.com/A9u/function_junction/db"
+	"github.com/A9u/function_junction/server"
 	"github.com/urfave/cli"
 )
 

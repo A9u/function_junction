@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/joshsoftware/golang-boilerplate/config"
+	"github.com/A9u/function_junction/config"
 	"github.com/urfave/negroni"
 )
 

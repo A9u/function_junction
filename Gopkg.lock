@@ -2,6 +2,17 @@
 
 
 [[projects]]
+  branch = "master"
+  digest = "1:69ea5d8cb05ae240ea8fdd2f816a5ca05d1b761b76ceaa6aad4090677112de05"
+  name = "github.com/a9u/function_junction"
+  packages = [
+    "app",
+    "db",
+  ]
+  pruneopts = "UT"
+  revision = "e797fe694033a3ae3d6a6dffa9b78d0b00c7090d"
+
+[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -59,6 +70,25 @@
   pruneopts = "UT"
   revision = "8cb6e5b959231cc1119e43259c4a608f9c51a241"
   version = "v1.0.0"
+
+[[projects]]
+  digest = "1:6c41d4f998a03b6604227ccad36edaed6126c397e5d78709ef4814a1145a6757"
+  name = "github.com/jmoiron/sqlx"
+  packages = [
+    ".",
+    "reflectx",
+  ]
+  pruneopts = "UT"
+  revision = "d161d7a76b5661016ad0b085869f77fd410f3e6a"
+  version = "v1.2.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:559a0ace7e55df1701b14ca87e2645146f4ae7047f7c97fb4aaff4886be80e31"
+  name = "github.com/joshsoftware/golang-boilerplate"
+  packages = ["config"]
+  pruneopts = "UT"
+  revision = "e797fe694033a3ae3d6a6dffa9b78d0b00c7090d"
 
 [[projects]]
   digest = "1:8ef506fc2bb9ced9b151dafa592d4046063d744c646c1bbe801982ce87e4bc24"
@@ -147,6 +177,14 @@
   pruneopts = "UT"
   revision = "c01d1270ff3e442a8a57cddc1c92dc1138598194"
   version = "v1.2.0"
+
+[[projects]]
+  digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ba968bfe8b2f7e042a574c888954fccecfa385b4"
+  version = "v0.8.1"
 
 [[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
@@ -332,12 +370,15 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/a9u/function_junction/app",
+    "github.com/a9u/function_junction/db",
     "github.com/gorilla/mux",
     "github.com/lib/pq",
     "github.com/mattes/migrate",
     "github.com/mattes/migrate/database",
     "github.com/mattes/migrate/database/postgres",
     "github.com/mattes/migrate/source/file",
+    "github.com/mongodb/mongo-go-driver/bson",
     "github.com/mongodb/mongo-go-driver/mongo",
     "github.com/spf13/viper",
     "github.com/stretchr/testify/assert",

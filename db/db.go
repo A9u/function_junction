@@ -34,32 +34,32 @@ type store struct {
 // }
 
 // func Transact(ctx context.Context, dbx *mongo.Database, opts *sql.TxOptions, txFunc func(context.Context) error) (err error) {
-	// tx, err := dbx.BeginTxx(ctx, opts)
-	// if err != nil {
-	// 	return
-	// }
-	// defer func() {
-	// 	if p := recover(); p != nil {
-	// 		switch p := p.(type) {
-	// 		case error:
-	// 			err = errors.WithStack(p)
-	// 		default:
-	// 			err = errors.Errorf("%s", p)
-	// 		}
-	// 	}
-	// 	if err != nil {
-	// 		e := tx.Rollback()
-	// 		if e != nil {
-	// 			err = errors.WithStack(e)
-	// 		}
-	// 		return
-	// 	}
-	// 	err = errors.WithStack(tx.Commit())
-	// }()
+// tx, err := dbx.BeginTxx(ctx, opts)
+// if err != nil {
+// 	return
+// }
+// defer func() {
+// 	if p := recover(); p != nil {
+// 		switch p := p.(type) {
+// 		case error:
+// 			err = errors.WithStack(p)
+// 		default:
+// 			err = errors.Errorf("%s", p)
+// 		}
+// 	}
+// 	if err != nil {
+// 		e := tx.Rollback()
+// 		if e != nil {
+// 			err = errors.WithStack(e)
+// 		}
+// 		return
+// 	}
+// 	err = errors.WithStack(tx.Commit())
+// }()
 
-	// ctxWithTx := newContext(ctx, tx)
-	// err = WithDefaultTimeout(ctxWithTx, txFunc)
-	// return err
+// ctxWithTx := newContext(ctx, tx)
+// err = WithDefaultTimeout(ctxWithTx, txFunc)
+// return err
 // }
 
 func WithTimeout(ctx context.Context, timeout time.Duration, op func(ctx context.Context) error) (err error) {
