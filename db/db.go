@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	// "github.com/pkg/errors"
 )
 
@@ -23,6 +24,13 @@ type Storer interface {
 	FindCategoryByID(ctx context.Context, id string) (category Category, err error)
 	DeleteCategoryByID(ctx context.Context, id string) (err error)
 	UpdateCategory(ctx context.Context, collection *mongo.Collection, filter *Category, category *Category) (err error)
+
+	// TeamMember
+	CreateTeamMember(ctx context.Context, collection *mongo.Collection, teamMember *TeamMember) (err error)
+	ListTeamMember(ctx context.Context,  teamID primitive.ObjectID, collection *mongo.Collection) (teamMembers []*TeamMember, err error)
+	FindTeamMemberByID(ctx context.Context, teamMemberID primitive.ObjectID, collection *mongo.Collection) (teamMember TeamMember, err error)
+	DeleteTeamMemberByID(ctx context.Context, teamMemberID primitive.ObjectID, collection *mongo.Collection) (err error)
+	UpdateTeamMember(ctx context.Context, teamMemberID primitive.ObjectID, collection *mongo.Collection, teamMember *TeamMember)(err error)
 }
 
 type store struct {
