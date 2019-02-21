@@ -6,6 +6,7 @@ import (
 
 	"github.com/A9u/function_junction/api"
 	"github.com/A9u/function_junction/category"
+	"github.com/A9u/function_junction/team_member"
 	"github.com/A9u/function_junction/config"
 	"github.com/gorilla/mux"
 )
@@ -28,6 +29,13 @@ func initRouter(dep dependencies) (router *mux.Router) {
 	router.HandleFunc("/categories/{category_id}", category.FindByID(dep.CategoryService)).Methods(http.MethodGet).Headers(versionHeader, v1)
 	router.HandleFunc("/categories/{category_id}", category.DeleteByID(dep.CategoryService)).Methods(http.MethodDelete).Headers(versionHeader, v1)
 	router.HandleFunc("/categories", category.Update(dep.CategoryService)).Methods(http.MethodPut).Headers(versionHeader, v1)
+
+	// TeamMember
+	router.HandleFunc("/team/{team_id}/team_members", team_member.Create(dep.TeamMemberService)).Methods(http.MethodPost).Headers(versionHeader, v1)
+	router.HandleFunc("/team/{team_id}/team_members", team_member.List(dep.TeamMemberService)).Methods(http.MethodGet).Headers(versionHeader, v1)
+	router.HandleFunc("/team/{team_id}/team_members/{team_member_id}", team_member.FindByID(dep.TeamMemberService)).Methods(http.MethodGet).Headers(versionHeader, v1)
+	router.HandleFunc("/team/{team_id}/team_members/{team_member_id}", team_member.DeleteByID(dep.TeamMemberService)).Methods(http.MethodDelete).Headers(versionHeader, v1)
+	router.HandleFunc("/team/{team_id}/team_members/{team_member_id}", team_member.Update(dep.TeamMemberService)).Methods(http.MethodPut).Headers(versionHeader, v1)
 
 	sh := http.StripPrefix("/docs/", http.FileServer(http.Dir("./swaggerui/")))
 	router.PathPrefix("/docs/").Handler(sh)
