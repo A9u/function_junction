@@ -2,9 +2,8 @@ package db
 
 import (
 	"context"
-	// "database/sql"
 	"time"
-
+	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	// "github.com/pkg/errors"
 )
@@ -26,6 +25,12 @@ type Storer interface {
 
 	CreateTeam(ctx context.Context, collection *mongo.Collection, team *Team) (err error)
 	ListTeams(ctx context.Context, collection *mongo.Collection) (teams []*Team, err error)
+	// Events
+	CreateEvent(ctx context.Context, collection *mongo.Collection, event *Event) (err error)
+	ListEvents(ctx context.Context, collection *mongo.Collection) (events []*Event, err error)
+	FindEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (event Event, err error)
+	DeleteEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (err error)
+	UpdateEvent(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection, event *Event)(err error)
 }
 
 type store struct {
