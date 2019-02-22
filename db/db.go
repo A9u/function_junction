@@ -23,6 +23,9 @@ type Storer interface {
 	FindCategoryByID(ctx context.Context, id string) (category Category, err error)
 	DeleteCategoryByID(ctx context.Context, id string) (err error)
 	UpdateCategory(ctx context.Context, collection *mongo.Collection, filter *Category, category *Category) (err error)
+
+	CreateTeam(ctx context.Context, collection *mongo.Collection, team *Team) (err error)
+	ListTeams(ctx context.Context, collection *mongo.Collection) (teams []*Team, err error)
 }
 
 type store struct {
