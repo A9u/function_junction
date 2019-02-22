@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
-	"github.com/a9u/function_junction/app"
-	"github.com/a9u/function_junction/db"
+	"github.com/A9u/function_junction/app"
+	"github.com/A9u/function_junction/db"
 	"github.com/stretchr/testify/assert"
 )
 
