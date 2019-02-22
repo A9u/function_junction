@@ -46,22 +46,22 @@ func initDB() (err error) {
 		return
 	}
 	db = client.Database("function-junction")
-	// db, err = sqlx.Open(dbConfig.Driver(), dbConfig.ConnectionURL())
 
 	if err = client.Ping(ctx, nil); err != nil {
 		return
 	}
-
 	// db.SetMaxIdleConns(dbConfig.MaxPoolSize())
 	// db.SetMaxOpenConns(dbConfig.MaxOpenConns())
 	// db.SetConnMaxLifetime(time.Duration(dbConfig.MaxLifeTimeMins()) * time.Minute)
 
 	return
 }
+
 func GetCollection(name string) *mongo.Collection {
-	collsection := db.Collection(name)
-	return collsection
+	collection := db.Collection(name)
+	return collection
 }
+
 func GetDB() *mongo.Database {
 	return db
 }

@@ -2,8 +2,9 @@ package event
 
 import (
 	"context"
+	"fmt"
 	"github.com/mongodb/mongo-go-driver/mongo"
-
+	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/A9u/function_junction/db"
 	"go.uber.org/zap"
 )
@@ -11,9 +12,9 @@ import (
 type Service interface {
 	list(ctx context.Context) (response listResponse, err error)
 	create(ctx context.Context, req createRequest) (err error)
-	// findByID(ctx context.Context, id string) (response findByIDResponse, err error)
-	// deleteByID(ctx context.Context, id string) (err error)
-	// update(ctx context.Context, req updateRequest) (err error)
+	findByID(ctx context.Context, eventID primitive.ObjectID) (response findByIDResponse, err error)
+	deleteByID(ctx context.Context, eventID primitive.ObjectID) (err error)
+	update(ctx context.Context, req updateRequest, eventID primitive.ObjectID) (err error)
 }
 
 type eventService struct {
@@ -65,50 +66,41 @@ func (es *eventService) create(ctx context.Context, c createRequest) (err error)
 	return
 }
 
-// func (es *eventService) update(ctx context.Context, c updateRequest) (err error) {
-// 	err = c.Validate()
-// 	if err != nil {
-// 		es.logger.Error("Invalid Request for event update", "err", err.Error(), "event", c)
-// 		return
-// 	}
-//
-// 	err = es.store.UpdateEvent(ctx, es.collection, &db.Category{Name: c.Name}, &db.Category{Name: c.Set.Name, Type: c.Set.Type})
-// 	if err != nil {
-// 		es.logger.Error("Error updating event", "err", err.Error(), "event", c)
-// 		return
-// 	}
-//
-// 	return
-// }
-//
-// func (es *eventService) findByID(ctx context.Context, id string) (response findByIDResponse, err error) {
-// 	// category, err := es.store.FindCategoryByID(ctx, id)
-// 	// if err == db.ErrCategoryNotExist {
-// 	// 	es.logger.Error("No category present", "err", err.Error())
-// 	// 	return response, errNoCategoryId
-// 	// }
-// 	// if err != nil {
-// 	// 	es.logger.Error("Error finding category", "err", err.Error(), "category_id", id)
-// 	// 	return
-// 	// }
-//
-// 	// response.Category = category
-// 	return
-// }
-//
-// func (es *eventService) deleteByID(ctx context.Context, id string) (err error) {
-// 	// err = es.store.DeleteCategoryByID(ctx, id)
-// 	// if err == db.ErrCategoryNotExist {
-// 	// 	es.logger.Error("Category Not present", "err", err.Error(), "category_id", id)
-// 	// 	return errNoCategoryId
-// 	// }
-// 	// if err != nil {
-// 	// 	es.logger.Error("Error deleting category", "err", err.Error(), "category_id", id)
-// 	// 	return
-// 	// }
-//
-// 	return
-// }
+func (es *eventService) findByID(ctx context.Context, id primitive.ObjectID) (response findByIDResponse, err error) {
+	event, err := es.store.FindEventByID(ctx, id, es.collection)
+	if err != nil {
+		es.logger.Error("Error finding Event - ", "err", err.Error(), "event_id", id)
+		return
+	}
+	response.Event = event
+	return
+}
+
+func (es *eventService) update(ctx context.Context, eu updateRequest, id primitive.ObjectID) (err error) {
+	err = eu.Validate()
+	if err != nil {
+		es.logger.Error("Invalid Request for event update", "err", err.Error(), "event", eu)
+		return
+	}
+	err = es.store.UpdateEvent(ctx, id, es.collection, &db.Event{Title: eu.Title, Description: eu.Description,
+		Venue: eu.Venue, IsPublished: eu.IsPublished})
+	if err != nil {
+		es.logger.Error("Error updating event", "err", err.Error(), "event", eu)
+		return
+	}
+	return
+}
+
+func (es *eventService) deleteByID(ctx context.Context, id primitive.ObjectID) (err error) {
+	fmt.Println("I was here in service")
+	err = es.store.DeleteEventByID(ctx, id, es.collection)
+	if err != nil {
+		es.logger.Error("Error deleting Event - ", "err", err.Error(), "event_id", id)
+		return
+	}
+
+	return
+}
 
 func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection) Service {
 	return &eventService{
