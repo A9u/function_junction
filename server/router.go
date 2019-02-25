@@ -3,12 +3,12 @@ package server
 import (
 	"fmt"
 	"net/http"
+
 	"github.com/A9u/function_junction/api"
-	"github.com/A9u/function_junction/category"
-	"github.com/A9u/function_junction/team_member"
-	"github.com/A9u/function_junction/team"
-	"github.com/A9u/function_junction/event"
 	"github.com/A9u/function_junction/config"
+	"github.com/A9u/function_junction/event"
+	"github.com/A9u/function_junction/team"
+	"github.com/A9u/function_junction/team_member"
 	"github.com/gorilla/mux"
 )
 

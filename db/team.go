@@ -12,10 +12,13 @@ import (
 
 type Team struct {
 	//ID        primitive.ObjectID `json:"_id"`
-	Name      string             `json:"name"`
-	EventID   primitive.ObjectID `json:"event_id"`
-	CreatedAt time.Time          `json:"created_at"`
-	UpdatedAt time.Time          `json:"updated_at"`
+	Name        string             `json:"name"`
+	EventID     primitive.ObjectID `json:"event_id"`
+	CreatorID   primitive.ObjectID `json:"creator_id"`
+	CreatedAt   time.Time          `json:"created_at"`
+	UpdatedAt   time.Time          `json:"updated_at"`
+	ShowcaseUrl string             `json:"showcase_url"`
+	Description string             `json:"description"`
 }
 
 func (s *store) CreateTeam(ctx context.Context, collection *mongo.Collection, team *Team) (err error) {

@@ -45,7 +45,7 @@ func (ts *teamService) create(ctx context.Context, c createRequest) (err error) 
 		return
 	}
 
-	err = ts.store.CreateTeam(ctx, ts.collection, &db.Team{Name: c.Name})
+	err = ts.store.CreateTeam(ctx, ts.collection, &db.Team{Name: c.Name, Description: c.Description, ShowcaseUrl: c.ShowcaseUrl})
 	if err != nil {
 		ts.logger.Error("Error creating team", "err", err.Error())
 		return
