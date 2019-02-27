@@ -17,6 +17,7 @@ type updateRequest struct {
 	MinSize           int           `json:"minSize"`
 	IsPublished       bool          `json:"isPublished"`
 	Venue             string        `json:"venue"`
+	UpdatedAt         time.Time     `db:"updated_at"`
 	Set  db.Event `json:"$set"`
 }
 
@@ -33,8 +34,8 @@ type createRequest struct {
 	MinSize           int           `json:"minSize"`
 	IsPublished       bool          `json:"isPublished"`
 	Venue             string        `json:"venue"`
-	CreatedAt         time.Time     `db:"created_at"`
-	UpdatedAt         time.Time     `db:"updated_at"`
+	CreatedAt         time.Time     `db:"createdAt"`
+	UpdatedAt         time.Time     `db:"updatedAt"`
 	RegisterBefore    time.Time     `db:"registerBefore"`
 }
 
@@ -53,9 +54,10 @@ func (cr createRequest) Validate() (err error) {
 	return
 }
 
-func (ur updateRequest) Validate() (err error) {
-	if ur.Title == "" {
-		return errEmptyTitle
-	}
-	return
+type createResponse struct {
+	Event *db.Event `json:"event"`
+}
+
+type updateResponse struct {
+	Event *db.Event `json:"event"`
 }
