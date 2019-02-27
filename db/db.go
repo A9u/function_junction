@@ -23,11 +23,11 @@ type Storer interface {
 	DeleteCategoryByID(ctx context.Context, id string) (err error)
 	UpdateCategory(ctx context.Context, collection *mongo.Collection, filter *Category, category *Category) (err error)
 	// Events
-	CreateEvent(ctx context.Context, collection *mongo.Collection, event *Event) (err error)
+	CreateEvent(ctx context.Context, collection *mongo.Collection, event *Event) (created_event *Event, err error)
 	ListEvents(ctx context.Context, collection *mongo.Collection) (events []*Event, err error)
 	FindEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (event Event, err error)
 	DeleteEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (err error)
-	UpdateEvent(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection, event *Event)(err error)
+	UpdateEvent(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection, event *Event) (updated_event *Event, err error)
 }
 
 type store struct {

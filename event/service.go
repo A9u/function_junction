@@ -11,10 +11,10 @@ import (
 
 type Service interface {
 	list(ctx context.Context) (response listResponse, err error)
-	create(ctx context.Context, req createRequest) (err error)
+	create(ctx context.Context, req createRequest) (response createResponse, err error)
 	findByID(ctx context.Context, eventID primitive.ObjectID) (response findByIDResponse, err error)
 	deleteByID(ctx context.Context, eventID primitive.ObjectID) (err error)
-	update(ctx context.Context, req updateRequest, eventID primitive.ObjectID) (err error)
+	update(ctx context.Context, req updateRequest, eventID primitive.ObjectID) (response updateResponse, err error)
 }
 
 type eventService struct {
@@ -38,14 +38,14 @@ func (es *eventService) list(ctx context.Context) (response listResponse, err er
 	return
 }
 
-func (es *eventService) create(ctx context.Context, c createRequest) (err error) {
+func (es *eventService) create(ctx context.Context, c createRequest) (response createResponse, err error) {
 	err = c.Validate()
 	if err != nil {
 		es.logger.Errorw("Invalid request for event create", "msg", err.Error(), "event", c)
 		return
 	}
 
-	err = es.store.CreateEvent(ctx, es.collection, &db.Event{
+	event, err := es.store.CreateEvent(ctx, es.collection, &db.Event{
 		Title: c.Title,
 		Description: c.Description,
 		StartDateTime: c.StartDateTime,
@@ -63,6 +63,7 @@ func (es *eventService) create(ctx context.Context, c createRequest) (err error)
 		es.logger.Error("Error creating event", "err", err.Error())
 		return
 	}
+	response.Event = event
 	return
 }
 
@@ -76,18 +77,14 @@ func (es *eventService) findByID(ctx context.Context, id primitive.ObjectID) (re
 	return
 }
 
-func (es *eventService) update(ctx context.Context, eu updateRequest, id primitive.ObjectID) (err error) {
-	err = eu.Validate()
-	if err != nil {
-		es.logger.Error("Invalid Request for event update", "err", err.Error(), "event", eu)
-		return
-	}
-	err = es.store.UpdateEvent(ctx, id, es.collection, &db.Event{Title: eu.Title, Description: eu.Description,
+func (es *eventService) update(ctx context.Context, eu updateRequest, id primitive.ObjectID) (response updateResponse, err error) {
+	event, err := es.store.UpdateEvent(ctx, id, es.collection, &db.Event{Title: eu.Title, Description: eu.Description,
 		Venue: eu.Venue, IsPublished: eu.IsPublished})
 	if err != nil {
 		es.logger.Error("Error updating event", "err", err.Error(), "event", eu)
 		return
 	}
+	response.Event = event
 	return
 }
 

@@ -24,15 +24,15 @@ type Event struct {
 	MinSize           int           `json:"minSize"`
 	IsPublished       bool          `json:"isPublished"`
 	Venue             string        `json:"venue"`
-	CreatedAt         time.Time     `db:"created_at"`
-	UpdatedAt         time.Time     `db:"updated_at"`
+	CreatedAt         time.Time     `db:"createdAt"`
+	UpdatedAt         time.Time     `db:"updatedAt"`
 	RegisterBefore    time.Time     `db:"registerBefore"`
 }
 
-func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, event *Event) (err error) {
+func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, event *Event) (created_event *Event, err error) {
 	event.CreatedAt = time.Now()
 	_, err = collection.InsertOne(ctx, event)
-	return err
+	return event, err
 }
 
 
@@ -63,12 +63,13 @@ func (s *store) DeleteEventByID(ctx context.Context, eventID primitive.ObjectID,
 	return err
 }
 
-func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, collection *mongo.Collection, event *Event) (err error) {
+func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, collection *mongo.Collection, event *Event) (updated_event *Event, err error) {
+	event.UpdatedAt = time.Now()
 	_, err = collection.UpdateOne(ctx, bson.D{{"_id", id}}, bson.D{{"$set",
 		bson.D{ { "title", event.Title },
 				{"description", event.Description },
 				{"isPublished", event.IsPublished },
 				{"venue", event.Venue },
 				{"updated_at", time.Now() }, }, },})
-	return err
+	return event, err
 }
