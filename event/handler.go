@@ -18,7 +18,7 @@ func Create(service Service) http.HandlerFunc {
 			return
 		}
 
-		err = service.create(req.Context(), c)
+		resp, err := service.create(req.Context(), c)
 		if isBadRequest(err) {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return
@@ -29,7 +29,7 @@ func Create(service Service) http.HandlerFunc {
 			return
 		}
 
-		api.Success(rw, http.StatusCreated, api.Response{Message: "Created Successfully"})
+		api.Success(rw, http.StatusCreated, resp)
 	})
 }
 
@@ -88,13 +88,14 @@ func Update(service Service, ) http.HandlerFunc {
 		if err != nil {
 			api.Error(rw, http.StatusInternalServerError, api.Response{Message: err.Error()})
 		}
+
 		var c updateRequest
 		err = json.NewDecoder(req.Body).Decode(&c)
 		if err != nil {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return
 		}
-		err = service.update(req.Context(), c ,id)
+		resp, err := service.update(req.Context(), c ,id)
 		if isBadRequest(err) {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return
@@ -105,7 +106,7 @@ func Update(service Service, ) http.HandlerFunc {
 			return
 		}
 
-		api.Success(rw, http.StatusOK, api.Response{Message: "Updated Successfully"})
+		api.Success(rw, http.StatusOK, resp)
 	})
 }
 
