@@ -3,10 +3,8 @@ package db
 import (
 	"context"
 	"time"
-
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
-	// "github.com/pkg/errors"
 )
 
 type ctxKey int

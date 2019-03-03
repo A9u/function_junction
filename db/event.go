@@ -11,7 +11,6 @@ import (
 
 
 type Event struct {
-	// ID        string    `db:"id"`
 	Id                primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	Title             string        `json:"title"`
 	Description       string        `json:"description"`
@@ -31,7 +30,10 @@ type Event struct {
 
 func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, event *Event) (created_event *Event, err error) {
 	event.CreatedAt = time.Now()
-	_, err = collection.InsertOne(ctx, event)
+	res, err := collection.InsertOne(ctx, event)
+	//if err != nil { return res,err }
+	id := res.InsertedID
+	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&event)
 	return event, err
 }
 
@@ -67,9 +69,17 @@ func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, collecti
 	event.UpdatedAt = time.Now()
 	_, err = collection.UpdateOne(ctx, bson.D{{"_id", id}}, bson.D{{"$set",
 		bson.D{ { "title", event.Title },
-				{"description", event.Description },
-				{"isPublished", event.IsPublished },
-				{"venue", event.Venue },
-				{"updated_at", time.Now() }, }, },})
+				{ "description", event.Description },
+				{ "isPublished", event.IsPublished },
+				{ "venue", event.Venue },
+				{ "startDateTime", event.StartDateTime },
+				{ "endDateTime", event.EndDateTime },
+				{ "isShowcasable", event.IsShowcasable },
+				{ "isIndividualParticipation", event.IsIndividualEvent },
+				{ "maxSize", event.MaxSize },
+				{ "minSize", event.MinSize },
+				{ "registerBefore", event.RegisterBefore },
+				{ "updated_at", time.Now() }, }, },})
+	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&event)
 	return event, err
 }
