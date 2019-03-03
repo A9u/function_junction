@@ -3,3 +3,4 @@ golang-boilerplate
 application.yml
 coverage*
 out
+Gopkg.lock
