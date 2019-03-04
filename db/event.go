@@ -57,6 +57,8 @@ func (s *store) ListEvents(ctx context.Context, collection *mongo.Collection) (e
 
 func (s *store) FindEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (event Event, err error) {
 	err = collection.FindOne(ctx, bson.D{{"_id", eventID}}).Decode(&event)
+	user, err := s.FindUserByID(ctx, event.CreatedBy)
+	fmt.Println(user.Name)
 	return event, err
 }
 
