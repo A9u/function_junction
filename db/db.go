@@ -36,6 +36,8 @@ type Storer interface {
 	FindTeamMemberByID(ctx context.Context, teamMemberID primitive.ObjectID, collection *mongo.Collection) (teamMember TeamMember, err error)
 	DeleteTeamMemberByID(ctx context.Context, teamMemberID primitive.ObjectID, collection *mongo.Collection) (err error)
 	UpdateTeamMember(ctx context.Context, teamMemberID primitive.ObjectID, collection *mongo.Collection, teamMember *TeamMember) (err error)
+	// User
+	FindUserByID(ctx context.Context, userID primitive.ObjectID) (user User, err error)
 }
 
 type store struct {
