@@ -12,10 +12,8 @@ func StartAPIServer() {
 	port := config.AppPort()
 
 	server := negroni.Classic()
-
-	server.Use(negroni.HandlerFunc(AuthMiddleware))
-
 	dependencies, err := initDependencies()
+	server.Use(negroni.HandlerFunc(AuthMiddleware))
 	if err != nil {
 		panic(err)
 	}
