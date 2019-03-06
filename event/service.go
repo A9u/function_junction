@@ -59,6 +59,7 @@ func (es *eventService) create(ctx context.Context, c createRequest) (response c
 		IsPublished:       c.IsPublished,
 		Venue:             c.Venue,
 		RegisterBefore:    c.RegisterBefore,
+		CreatedBy:         ctx.Value("currentUser").(db.User).ID,
 	})
 
 	if err != nil {
