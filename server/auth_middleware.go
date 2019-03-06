@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/A9u/function_junction/db"
@@ -10,7 +9,6 @@ import (
 )
 
 func AuthMiddleware(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	fmt.Println("testing middleware")
 	ctx := r.Context()
 	user_id := r.Header.Get("Authorization")
 	id, _ := primitive.ObjectIDFromHex(user_id)
