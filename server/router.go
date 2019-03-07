@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/A9u/function_junction/api"
+	"github.com/A9u/function_junction/category"
+	"github.com/A9u/function_junction/config"
 	"github.com/gorilla/mux"
-	"github.com/joshsoftware/golang-boilerplate/api"
-	"github.com/joshsoftware/golang-boilerplate/category"
-	"github.com/joshsoftware/golang-boilerplate/config"
 )
 
 const (

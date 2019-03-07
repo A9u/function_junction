@@ -2,8 +2,9 @@ package category
 
 import (
 	"context"
+	"github.com/mongodb/mongo-go-driver/mongo"
 
-	"github.com/joshsoftware/golang-boilerplate/db"
+	"github.com/A9u/function_junction/db"
 	"go.uber.org/zap"
 )
 
@@ -16,12 +17,13 @@ type Service interface {
 }
 
 type categoryService struct {
-	store  db.Storer
-	logger *zap.SugaredLogger
+	store      db.Storer
+	logger     *zap.SugaredLogger
+	collection *mongo.Collection
 }
 
 func (cs *categoryService) list(ctx context.Context) (response listResponse, err error) {
-	categories, err := cs.store.ListCategories(ctx)
+	categories, err := cs.store.ListCategories(ctx, cs.collection)
 	if err == db.ErrCategoryNotExist {
 		cs.logger.Error("No category present", "err", err.Error())
 		return response, errNoCategories
@@ -42,9 +44,7 @@ func (cs *categoryService) create(ctx context.Context, c createRequest) (err err
 		return
 	}
 
-	err = cs.store.CreateCategory(ctx, &db.Category{
-		Name: c.Name,
-	})
+	err = cs.store.CreateCategory(ctx, cs.collection, &db.Category{Name: c.Name, Type: c.Type})
 	if err != nil {
 		cs.logger.Error("Error creating category", "err", err.Error())
 		return
@@ -59,10 +59,7 @@ func (cs *categoryService) update(ctx context.Context, c updateRequest) (err err
 		return
 	}
 
-	err = cs.store.UpdateCategory(ctx, &db.Category{
-		ID:   c.ID,
-		Name: c.Name,
-	})
+	err = cs.store.UpdateCategory(ctx, cs.collection, &db.Category{Name: c.Name}, &db.Category{Name: c.Set.Name, Type: c.Set.Type})
 	if err != nil {
 		cs.logger.Error("Error updating category", "err", err.Error(), "category", c)
 		return
@@ -72,37 +69,38 @@ func (cs *categoryService) update(ctx context.Context, c updateRequest) (err err
 }
 
 func (cs *categoryService) findByID(ctx context.Context, id string) (response findByIDResponse, err error) {
-	category, err := cs.store.FindCategoryByID(ctx, id)
-	if err == db.ErrCategoryNotExist {
-		cs.logger.Error("No category present", "err", err.Error())
-		return response, errNoCategoryId
-	}
-	if err != nil {
-		cs.logger.Error("Error finding category", "err", err.Error(), "category_id", id)
-		return
-	}
+	// category, err := cs.store.FindCategoryByID(ctx, id)
+	// if err == db.ErrCategoryNotExist {
+	// 	cs.logger.Error("No category present", "err", err.Error())
+	// 	return response, errNoCategoryId
+	// }
+	// if err != nil {
+	// 	cs.logger.Error("Error finding category", "err", err.Error(), "category_id", id)
+	// 	return
+	// }
 
-	response.Category = category
+	// response.Category = category
 	return
 }
 
 func (cs *categoryService) deleteByID(ctx context.Context, id string) (err error) {
-	err = cs.store.DeleteCategoryByID(ctx, id)
-	if err == db.ErrCategoryNotExist {
-		cs.logger.Error("Category Not present", "err", err.Error(), "category_id", id)
-		return errNoCategoryId
-	}
-	if err != nil {
-		cs.logger.Error("Error deleting category", "err", err.Error(), "category_id", id)
-		return
-	}
+	// err = cs.store.DeleteCategoryByID(ctx, id)
+	// if err == db.ErrCategoryNotExist {
+	// 	cs.logger.Error("Category Not present", "err", err.Error(), "category_id", id)
+	// 	return errNoCategoryId
+	// }
+	// if err != nil {
+	// 	cs.logger.Error("Error deleting category", "err", err.Error(), "category_id", id)
+	// 	return
+	// }
 
 	return
 }
 
-func NewService(s db.Storer, l *zap.SugaredLogger) Service {
+func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection) Service {
 	return &categoryService{
-		store:  s,
-		logger: l,
+		store:      s,
+		logger:     l,
+		collection: c,
 	}
 }

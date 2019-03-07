@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/joshsoftware/golang-boilerplate/config"
+	"github.com/A9u/function_junction/config"
 	_ "github.com/lib/pq"
 	"github.com/mattes/migrate"
 	"github.com/mattes/migrate/database"
