@@ -12,7 +12,7 @@ import (
 
 type Service interface {
 	list(ctx context.Context) (response listResponse, err error)
-	create(ctx context.Context, req createRequest, eventID primitive.ObjectID) (err error)
+	create(ctx context.Context, req createRequest, eventID primitive.ObjectID) (response createResponse, err error)
 }
 
 type teamService struct {
@@ -36,24 +36,25 @@ func (ts *teamService) list(ctx context.Context) (response listResponse, err err
 	return
 }
 
-func (ts *teamService) create(ctx context.Context, c createRequest, eventID primitive.ObjectID) (err error) {
+func (ts *teamService) create(ctx context.Context, c createRequest, eventID primitive.ObjectID) (response createResponse, err error) {
 	err = c.Validate()
 	if err != nil {
 		ts.logger.Errorw("Invalid request for team create", "msg", err.Error(), "team", c)
 		return
 	}
 
-	err = ts.store.CreateTeam(ctx, ts.collection, &db.Team{
-    Name: c.Name,
-    Description: c.Description,
-    ShowcaseUrl: c.ShowcaseUrl,
-    EventID: eventID,
-    CreatorID: ctx.Value("currentUser").(db.User).ID,
-  })
+	createdTeam, err := ts.store.CreateTeam(ctx, ts.collection, &db.Team{
+		Name:        c.Name,
+		Description: c.Description,
+		ShowcaseUrl: c.ShowcaseUrl,
+		EventID:     eventID,
+		CreatorID:   ctx.Value("currentUser").(db.User).ID,
+	})
 	if err != nil {
 		ts.logger.Error("Error creating team", "err", err.Error())
 		return
 	}
+	response.Team = createdTeam
 	return
 }
 
