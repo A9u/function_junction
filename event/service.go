@@ -3,9 +3,10 @@ package event
 import (
 	"context"
 	"fmt"
-	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/bson/primitive"
+
 	"github.com/A9u/function_junction/db"
+	"github.com/mongodb/mongo-go-driver/bson/primitive"
+	"github.com/mongodb/mongo-go-driver/mongo"
 	"go.uber.org/zap"
 )
 
@@ -45,19 +46,20 @@ func (es *eventService) create(ctx context.Context, c createRequest) (response c
 		return
 	}
 
+	fmt.Println(ctx.Value("currentUser"))
 	event, err := es.store.CreateEvent(ctx, es.collection, &db.Event{
-		Title: c.Title,
-		Description: c.Description,
-		StartDateTime: c.StartDateTime,
-		EndDateTime: c.EndDateTime,
-		IsShowcasable: c.IsShowcasable,
+		Title:             c.Title,
+		Description:       c.Description,
+		StartDateTime:     c.StartDateTime,
+		EndDateTime:       c.EndDateTime,
+		IsShowcasable:     c.IsShowcasable,
 		IsIndividualEvent: c.IsIndividualEvent,
-		CreatedBy: c.CreatedBy,
-		MaxSize: c.MaxSize,
-		MinSize: c.MinSize,
-		IsPublished: c.IsPublished,
-		Venue: c.Venue,
-		RegisterBefore: c.RegisterBefore,
+		MaxSize:           c.MaxSize,
+		MinSize:           c.MinSize,
+		IsPublished:       c.IsPublished,
+		Venue:             c.Venue,
+		RegisterBefore:    c.RegisterBefore,
+		CreatedBy:         ctx.Value("currentUser").(db.User).ID,
 	})
 
 	if err != nil {

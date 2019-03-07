@@ -2,7 +2,6 @@ package team
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/mongodb/mongo-go-driver/mongo"
 
@@ -23,8 +22,6 @@ type teamService struct {
 
 func (ts *teamService) list(ctx context.Context) (response listResponse, err error) {
 	teams, err := ts.store.ListTeams(ctx, ts.collection)
-	fmt.Println("========")
-	fmt.Println(teams)
 	if err == db.ErrTeamNotExist {
 		ts.logger.Error("No team present", "err", err.Error())
 		return response, errNoTeams

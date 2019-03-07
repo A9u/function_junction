@@ -3,29 +3,29 @@ package db
 import (
 	"context"
 	"fmt"
-	"github.com/mongodb/mongo-go-driver/mongo"
+	"time"
+
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
-	"time"
+	"github.com/mongodb/mongo-go-driver/mongo"
 )
 
-
 type Event struct {
-	Id                primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
-	Title             string        `json:"title"`
-	Description       string        `json:"description"`
-	StartDateTime     time.Time     `json:"start_date_time"`
-	EndDateTime       time.Time     `json:"end_date_time"`
-	IsShowcasable     bool          `json:"is_showcasable"`
-	IsIndividualEvent bool          `json:"is_individual_participation"`
-	CreatedBy         primitive.ObjectID   `json:"created_by"`
-	MaxSize           int           `json:"max_size"`
-	MinSize           int           `json:"min_size"`
-	IsPublished       bool          `json:"is_published"`
-	Venue             string        `json:"venue"`
-	CreatedAt         time.Time     `json:"created_at"`
-	UpdatedAt         time.Time     `json:"updated_at"`
-	RegisterBefore    time.Time     `json:"register_before"`
+	Id                primitive.ObjectID	`json:"id,omitempty" bson:"_id,omitempty"`
+	Title             string        		`json:"title"`
+	Description       string        		`json:"description"`
+	StartDateTime     time.Time     		`json:"start_date_time"`
+	EndDateTime       time.Time     		`json:"end_date_time"`
+	IsShowcasable     bool          		`json:"is_showcasable"`
+	IsIndividualEvent bool          		`json:"is_individual_participation"`
+	CreatedBy         primitive.ObjectID    `json:"created_by"`
+	MaxSize           int           		`json:"max_size"`
+	MinSize           int           		`json:"min_size"`
+	IsPublished       bool          		`json:"is_published"`
+	Venue             string        		`json:"venue"`
+	CreatedAt         time.Time     		`json:"created_at"`
+	UpdatedAt         time.Time     		`json:"updated_at"`
+	RegisterBefore    time.Time     		`json:"register_before"`
 }
 
 func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, event *Event) (created_event *Event, err error) {
@@ -36,7 +36,6 @@ func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, e
 	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&event)
 	return event, err
 }
-
 
 func (s *store) ListEvents(ctx context.Context, collection *mongo.Collection) (events []*Event, err error) {
 	cur, err := collection.Find(ctx, bson.D{})
