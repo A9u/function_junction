@@ -14,24 +14,24 @@ type Event struct {
 	Id                primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	Title             string        `json:"title"`
 	Description       string        `json:"description"`
-	StartDateTime     time.Time     `json:"startDateTime"`
-	EndDateTime       time.Time     `json:"endDateTime"`
-	IsShowcasable     bool          `json:"isShowcasable"`
-	IsIndividualEvent bool          `json:"isIndividualParticipation"`
-	CreatedBy         primitive.ObjectID   `json:"createdBy"`
-	MaxSize           int           `json:"maxSize"`
-	MinSize           int           `json:"minSize"`
-	IsPublished       bool          `json:"isPublished"`
+	StartDateTime     time.Time     `json:"start_date_time"`
+	EndDateTime       time.Time     `json:"end_date_time"`
+	IsShowcasable     bool          `json:"is_showcasable"`
+	IsIndividualEvent bool          `json:"is_individual_participation"`
+	CreatedBy         primitive.ObjectID   `json:"created_by"`
+	MaxSize           int           `json:"max_size"`
+	MinSize           int           `json:"min_size"`
+	IsPublished       bool          `json:"is_published"`
 	Venue             string        `json:"venue"`
-	CreatedAt         time.Time     `db:"createdAt"`
-	UpdatedAt         time.Time     `db:"updatedAt"`
-	RegisterBefore    time.Time     `db:"registerBefore"`
+	CreatedAt         time.Time     `json:"created_at"`
+	UpdatedAt         time.Time     `json:"updated_at"`
+	RegisterBefore    time.Time     `json:"register_before"`
 }
 
 func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, event *Event) (created_event *Event, err error) {
 	event.CreatedAt = time.Now()
 	res, err := collection.InsertOne(ctx, event)
-	//if err != nil { return res,err }
+	// if err != nil { return res,err }
 	id := res.InsertedID
 	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&event)
 	return event, err
@@ -70,15 +70,15 @@ func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, collecti
 	_, err = collection.UpdateOne(ctx, bson.D{{"_id", id}}, bson.D{{"$set",
 		bson.D{ { "title", event.Title },
 				{ "description", event.Description },
-				{ "isPublished", event.IsPublished },
+				{ "is_published", event.IsPublished },
 				{ "venue", event.Venue },
-				{ "startDateTime", event.StartDateTime },
-				{ "endDateTime", event.EndDateTime },
-				{ "isShowcasable", event.IsShowcasable },
-				{ "isIndividualParticipation", event.IsIndividualEvent },
-				{ "maxSize", event.MaxSize },
-				{ "minSize", event.MinSize },
-				{ "registerBefore", event.RegisterBefore },
+				{ "start_date_time", event.StartDateTime },
+				{ "end_date_time", event.EndDateTime },
+				{ "is_showcasable", event.IsShowcasable },
+				{ "is_individual_participation", event.IsIndividualEvent },
+				{ "max_size", event.MaxSize },
+				{ "min_size", event.MinSize },
+				{ "register_before", event.RegisterBefore },
 				{ "updated_at", time.Now() }, }, },})
 	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&event)
 	return event, err
