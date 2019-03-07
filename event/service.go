@@ -57,6 +57,7 @@ func (es *eventService) create(ctx context.Context, c createRequest) (response c
 		MinSize: c.MinSize,
 		IsPublished: c.IsPublished,
 		Venue: c.Venue,
+		RegisterBefore: c.RegisterBefore,
 	})
 
 	if err != nil {
@@ -95,7 +96,6 @@ func (es *eventService) deleteByID(ctx context.Context, id primitive.ObjectID) (
 		es.logger.Error("Error deleting Event - ", "err", err.Error(), "event_id", id)
 		return
 	}
-
 	return
 }
 
