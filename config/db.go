@@ -38,6 +38,9 @@ func (c databaseConfig) MaxOpenConns() int {
 func (c databaseConfig) MaxLifeTimeMins() int {
 	return c.maxLifeTimeMins
 }
+func (c databaseConfig) DbName() string {
+	return c.name
+}
 
 func newDatabaseConfig() databaseConfig {
 	return databaseConfig{
