@@ -10,11 +10,11 @@ import (
 type createRequest struct {
 	Name        string             `json:"name"`
 	Type        string             `json:"type"`
-	EventID     primitive.ObjectID `json:"event_id"`
-	CreatorID   primitive.ObjectID `json:"creator_id"`
-	CreatedAt   time.Time          `json:"created_at"`
-	UpdatedAt   time.Time          `json:"updated_at"`
-	ShowcaseUrl string             `json:"showcase_url"`
+	EventID     primitive.ObjectID `json:"eventId"`
+	CreatorID   primitive.ObjectID `json:"creatorId"`
+	CreatedAt   time.Time          `json:"createdAt"`
+	UpdatedAt   time.Time          `json:"updatedAt"`
+	ShowcaseUrl string             `json:"showcaseUrl"`
 	Description string             `json:"description"`
 }
 
@@ -28,3 +28,17 @@ func (cr createRequest) Validate() (err error) {
 	}
 	return
 }
+
+type createResponse struct {
+  Team *db.Team `json:"team"`
+}
+
+/*
+func (cr createRequest) ValidateEvent(ctx, eventID) (err error) {
+  _, err := db.store.FindEventByID(ctx, eventID, app.GetCollection("events")
+  if err != "" {
+    return errInvalidEventID
+  }
+  return
+}
+*/
