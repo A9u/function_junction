@@ -1,20 +1,12 @@
 package team
 
 import (
-	"time"
-
 	"github.com/A9u/function_junction/db"
-	"github.com/mongodb/mongo-go-driver/bson/primitive"
 )
 
 type createRequest struct {
 	Name        string             `json:"name"`
-	Type        string             `json:"type"`
-	EventID     primitive.ObjectID `json:"eventId"`
-	CreatorID   primitive.ObjectID `json:"creatorId"`
-	CreatedAt   time.Time          `json:"createdAt"`
-	UpdatedAt   time.Time          `json:"updatedAt"`
-	ShowcaseUrl string             `json:"showcaseUrl"`
+	ShowcaseUrl string             `json:"showcase_url"`
 	Description string             `json:"description"`
 }
 
