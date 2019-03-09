@@ -4,6 +4,7 @@ import (
 	"github.com/A9u/function_junction/db"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"time"
+	// "fmt"
 	)
 
 type updateRequest struct {
@@ -47,12 +48,51 @@ type listResponse struct {
 	Events []*db.Event `json:"events"`
 }
 
-func (cr createRequest) Validate() (err error) {
+func (cr createRequest) CreateValidate() (err error) {
 	if cr.Title == "" {
 		return errEmptyTitle
 	}
+
+	if cr.EndDateTime.IsZero() || cr.StartDateTime.IsZero() {
+		return errEmptyDate
+	}
+
+	if cr.IsIndividualEvent == false && (cr.MaxSize == 0 || cr.MinSize == 0){
+		return errEmptyTeamSize
+	}
+
+	if cr.IsIndividualEvent == false && (cr.MinSize > cr.MaxSize){
+		return errEmptyTeamSize
+	}
 	return
 }
+
+func (cr updateRequest) UpdateValidate() (err error) {
+	if cr.Title == "" {
+		return errEmptyTitle
+	}
+
+	if cr.EndDateTime.IsZero() || cr.StartDateTime.IsZero() {
+		return errEmptyDate
+	}
+
+	if cr.IsIndividualEvent == false && (cr.MaxSize == 0 || cr.MinSize == 0){
+		return errEmptyTeamSize
+	}
+
+	if cr.IsIndividualEvent == false && (cr.MinSize > cr.MaxSize){
+		return errEmptyTeamSize
+	}
+	return
+}
+
+// func (cr createRequest) ValidateDataTypes() (err error) {
+// 	fmt.Println(cr.IsIndividualEvent)
+// 	if !(cr.IsIndividualEvent == true || cr.IsIndividualEvent == false) {
+// 		return errEmptyIndividualEvent
+// 	}
+// 	return
+// }
 
 type createResponse struct {
 	Event *db.Event `json:"event"`

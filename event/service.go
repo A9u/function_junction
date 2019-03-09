@@ -39,9 +39,9 @@ func (es *eventService) list(ctx context.Context) (response listResponse, err er
 }
 
 func (es *eventService) create(ctx context.Context, c createRequest) (response createResponse, err error) {
-	err = c.Validate()
+	err = c.CreateValidate()
 	if err != nil {
-		es.logger.Errorw("Invalid request for event create", "msg", err.Error(), "event", c)
+		es.logger.Error("Invalid request for event create", "msg", err.Error(), "event", c)
 		return
 	}
 
@@ -79,6 +79,12 @@ func (es *eventService) findByID(ctx context.Context, id primitive.ObjectID) (re
 }
 
 func (es *eventService) update(ctx context.Context, eu updateRequest, id primitive.ObjectID) (response updateResponse, err error) {
+	err = eu.UpdateValidate()
+	if err != nil {
+		es.logger.Error("Invalid request for event create", "msg", err.Error(), "event", eu)
+		return
+	}
+
 	event, err := es.store.UpdateEvent(ctx, id, es.collection, &db.Event{Title: eu.Title, Description: eu.Description,
 		Venue: eu.Venue, IsPublished: eu.IsPublished})
 	if err != nil {
