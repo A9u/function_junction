@@ -10,9 +10,10 @@ import (
 
 func StartAPIServer() {
 	port := config.AppPort()
-	server := negroni.Classic()
 
+	server := negroni.Classic()
 	dependencies, err := initDependencies()
+	server.Use(negroni.HandlerFunc(AuthMiddleware))
 	if err != nil {
 		panic(err)
 	}

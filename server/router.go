@@ -3,10 +3,13 @@ package server
 import (
 	"fmt"
 	"net/http"
+
 	"github.com/A9u/function_junction/api"
 	"github.com/A9u/function_junction/config"
-	"github.com/gorilla/mux"
 	"github.com/A9u/function_junction/event"
+	"github.com/A9u/function_junction/team"
+	"github.com/A9u/function_junction/team_member"
+	"github.com/gorilla/mux"
 )
 
 const (
@@ -24,6 +27,16 @@ func initRouter(dep dependencies) (router *mux.Router) {
 	router.HandleFunc("/events/{event_id}", event.FindByID(dep.EventService)).Methods(http.MethodGet).Headers(versionHeader, v1)
 	router.HandleFunc("/events/{event_id}", event.DeleteByID(dep.EventService)).Methods(http.MethodDelete).Headers(versionHeader, v1)
 	router.HandleFunc("/events/{event_id}", event.Update(dep.EventService)).Methods(http.MethodPut).Headers(versionHeader, v1)
+
+	router.HandleFunc("/events/{event_id}/teams", team.Create(dep.TeamService)).Methods(http.MethodPost).Headers(versionHeader, v1)
+	router.HandleFunc("/events/{event_id}/teams", team.List(dep.TeamService)).Methods(http.MethodGet).Headers(versionHeader, v1)
+
+	// TeamMember
+	router.HandleFunc("/team/{team_id}/team_members", team_member.Create(dep.TeamMemberService)).Methods(http.MethodPost).Headers(versionHeader, v1)
+	router.HandleFunc("/team/{team_id}/team_members", team_member.List(dep.TeamMemberService)).Methods(http.MethodGet).Headers(versionHeader, v1)
+	router.HandleFunc("/team/{team_id}/team_members/{team_member_id}", team_member.FindByID(dep.TeamMemberService)).Methods(http.MethodGet).Headers(versionHeader, v1)
+	router.HandleFunc("/team/{team_id}/team_members/{team_member_id}", team_member.DeleteByID(dep.TeamMemberService)).Methods(http.MethodDelete).Headers(versionHeader, v1)
+	router.HandleFunc("/team/{team_id}/team_members/{team_member_id}", team_member.Update(dep.TeamMemberService)).Methods(http.MethodPut).Headers(versionHeader, v1)
 
 	sh := http.StripPrefix("/docs/", http.FileServer(http.Dir("./swaggerui/")))
 	router.PathPrefix("/docs/").Handler(sh)

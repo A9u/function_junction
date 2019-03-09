@@ -45,7 +45,8 @@ func initDB() (err error) {
 	if err != nil {
 		return
 	}
-	db = client.Database("function-junction")
+	db = client.Database(dbConfig.DbName())
+	// db, err = sqlx.Open(dbConfig.Driver(), dbConfig.ConnectionURL())
 
 	if err = client.Ping(ctx, nil); err != nil {
 		return

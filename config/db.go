@@ -6,8 +6,8 @@ type databaseConfig struct {
 	driver          string
 	host            string
 	name            string
-	user            string
-	password        string
+  //user            string
+	//password        string
 	port            int
 	maxPoolSize     int
 	maxOpenCons     int
@@ -23,7 +23,8 @@ func (c databaseConfig) Driver() string {
 }
 
 func (c databaseConfig) ConnectionURL() string {
-	return fmt.Sprintf("mongodb://%s:%s@%s:%d/%s", c.user, c.password, c.host, c.port, c.name)
+	//return fmt.Sprintf("mongodb://%s:%s@%s:%d/%s", c.user, c.password, c.host, c.port, c.name)
+	return fmt.Sprintf("mongodb://%s:%d/%s", c.host, c.port, c.name)
 }
 
 func (c databaseConfig) MaxPoolSize() int {
@@ -37,14 +38,17 @@ func (c databaseConfig) MaxOpenConns() int {
 func (c databaseConfig) MaxLifeTimeMins() int {
 	return c.maxLifeTimeMins
 }
+func (c databaseConfig) DbName() string {
+	return c.name
+}
 
 func newDatabaseConfig() databaseConfig {
 	return databaseConfig{
 		driver:          readEnvString("DB_DRIVER"),
 		host:            readEnvString("DB_HOST"),
 		name:            readEnvString("DB_NAME"),
-		user:            readEnvString("DB_USER"),
-		password:        readEnvString("DB_PASSWORD"),
+		//user:            readEnvString("DB_USER"),
+		//password:        readEnvString("DB_PASSWORD"),
 		port:            readEnvInt("DB_PORT"),
 		maxPoolSize:     readEnvInt("DB_MAX_POOL_SIZE"),
 		maxOpenCons:     readEnvInt("DB_MAX_OPEN_CONS"),
