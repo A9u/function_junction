@@ -3,32 +3,53 @@ package mailer
 import (
 	"fmt"
 	"github.com/A9u/function_junction/config"
-	"net/smtp"
+	"github.com/sendgrid/sendgrid-go"
+	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
-func NotifyAll() {
-	smtpConfig := config.Smtp()
+type Email struct {
+	To      []string
+	From    string
+	Subject string
+	Body    string
+}
 
-	fmt.Println("inside notify member")
-	var (
-		from       = "anusha@joshsoftware.com"
-		recipients = []string{"anusha+test@joshsoftware.com"}
-	)
+func getTos(emails []string) []*mail.Email {
+	var tos = make([]*mail.Email, len(emails))
 
-	msg := "From: " + from + "\n" +
-		"To: " + "anusha+test@joshsoftware.com" + "\n" +
-		"Subject: Hello there\n\n" +
-		"This is first email from Golang"
+	fmt.Println(len(emails))
+	for i := 0; i < len(emails); i++ {
+		tos[i] = mail.NewEmail("", emails[i])
+	}
 
-	hostname := smtpConfig.Domain()
-	fmt.Println("inside notify member 2")
+	return tos
+}
 
-	auth := smtp.PlainAuth("", smtpConfig.Username(), smtpConfig.Password(), hostname)
-	fmt.Println("inside notify member 3")
+func (e *Email) Send() {
+	from := mail.NewEmail("", e.From)
+	tos := getTos(e.To)
 
-	err := smtp.SendMail(hostname+":"+smtpConfig.Port(), auth, from, recipients, []byte(msg))
-	fmt.Println(err)
+	email := mail.NewV3Mail()
+	p := mail.NewPersonalization()
+
+	p.AddTos(tos...)
+	p.Subject = e.Subject
+
+	email.AddPersonalizations(p)
+
+	body := "<p> Hi, </p>" + e.Body
+	content := mail.NewContent("text/html", body)
+	email.AddContent(content)
+	email.SetFrom(from)
+
+	client := sendgrid.NewSendClient(config.SmtpApiKey())
+
+	response, err := client.Send(email)
 	if err != nil {
 		fmt.Println(err)
+	} else {
+		fmt.Println(response.StatusCode)
+		fmt.Println(response.Body)
+		fmt.Println(response.Headers)
 	}
 }
