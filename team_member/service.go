@@ -2,15 +2,15 @@ package team_member
 
 import (
 	"context"
-	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
+	"github.com/mongodb/mongo-go-driver/mongo"
 
 	"github.com/A9u/function_junction/db"
 	"go.uber.org/zap"
 )
 
 type Service interface {
-	list(ctx context.Context, teamID  primitive.ObjectID) (response listResponse, err error)
+	list(ctx context.Context, teamID primitive.ObjectID) (response listResponse, err error)
 	create(ctx context.Context, req createRequest) (err error)
 	findByID(ctx context.Context, teamMemberID primitive.ObjectID) (response findByIDResponse, err error)
 	deleteByID(ctx context.Context, teamMemberID primitive.ObjectID) (err error)
@@ -25,12 +25,12 @@ type teamMemberService struct {
 
 func (tms *teamMemberService) list(ctx context.Context, teamID primitive.ObjectID) (response listResponse, err error) {
 	teamMembers, err := tms.store.ListTeamMember(ctx, teamID, tms.collection)
-	if err == db.ErrCategoryNotExist {
-		tms.logger.Error("No category present", "err", err.Error())
+	if err == db.ErrTeamMemberNotExist {
+		tms.logger.Error("No team members added", "err", err.Error())
 		return response, errNoTeamMember
 	}
 	if err != nil {
-		tms.logger.Error("Error listing categories", "err", err.Error())
+		tms.logger.Error("Error listing team members", "err", err.Error())
 		return
 	}
 
