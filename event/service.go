@@ -3,11 +3,13 @@ package event
 import (
 	"context"
 	"fmt"
+	"github.com/A9u/function_junction/config"
 	"github.com/A9u/function_junction/db"
 	"github.com/A9u/function_junction/mailer"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"go.uber.org/zap"
+	"time"
 )
 
 type Service interface {
@@ -25,19 +27,18 @@ type eventService struct {
 }
 
 func (es *eventService) list(ctx context.Context) (response listResponse, err error) {
-	/*
-		events, err := es.store.ListEvents(ctx, es.collection)
-		if err == db.ErrEventNotExist {
-			es.logger.Error("No events present", "err", err.Error())
-			return response, errNoEvents
-		}
-		if err != nil {
-			es.logger.Error("Error listing events", "err", err.Error())
-			return
-		}
+	events, err := es.store.ListEvents(ctx, es.collection)
+	if err == db.ErrEventNotExist {
+		es.logger.Error("No events present", "err", err.Error())
+		return response, errNoEvents
+	}
+	if err != nil {
+		es.logger.Error("Error listing events", "err", err.Error())
+		return
+	}
 
-		response.Events = events
-	*/
+	response.Events = events
+
 	return
 }
 
@@ -48,7 +49,8 @@ func (es *eventService) create(ctx context.Context, c createRequest) (response c
 		return
 	}
 
-	fmt.Println(ctx.Value("currentUser"))
+	currentUser := ctx.Value("currentUser").(db.User)
+
 	event, err := es.store.CreateEvent(ctx, es.collection, &db.Event{
 		Title:             c.Title,
 		Description:       c.Description,
@@ -61,15 +63,18 @@ func (es *eventService) create(ctx context.Context, c createRequest) (response c
 		IsPublished:       c.IsPublished,
 		Venue:             c.Venue,
 		RegisterBefore:    c.RegisterBefore,
-		CreatedBy:         ctx.Value("currentUser").(db.User).ID,
+		CreatedBy:         currentUser.ID,
 	})
-
-	mailer.NotifyAll()
 
 	if err != nil {
 		es.logger.Error("Error creating event", "err", err.Error())
 		return
 	}
+
+	if event.IsPublished {
+		notifyAll(event, currentUser)
+	}
+
 	response.Event = event
 	return
 }
@@ -112,4 +117,17 @@ func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection) Service 
 		logger:     l,
 		collection: c,
 	}
+}
+
+func notifyAll(event *db.Event, currentUser db.User) {
+	mail := mailer.Email{}
+	mail.From = currentUser.Email
+	mail.To = []string{"all@joshsoftware.com"}
+	mail.Subject = "New Event added - " + event.Title
+	mail.Body = "A new event <b>" + event.Title + "</b> has been added. " +
+		"<p> It is at " + event.Venue + " from " + event.StartDateTime.Format(time.ANSIC) + " to " +
+		event.EndDateTime.Format(time.ANSIC) + ". </p>" +
+		"<p> Please check the details <a href=" + config.URL() + "events/" + event.Id.String() + " > here </a> <p>"
+
+	mail.Send()
 }
