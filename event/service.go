@@ -3,8 +3,8 @@ package event
 import (
 	"context"
 	"fmt"
-
 	"github.com/A9u/function_junction/db"
+	"github.com/A9u/function_junction/mailer"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"go.uber.org/zap"
@@ -25,17 +25,19 @@ type eventService struct {
 }
 
 func (es *eventService) list(ctx context.Context) (response listResponse, err error) {
-	events, err := es.store.ListEvents(ctx, es.collection)
-	if err == db.ErrEventNotExist {
-		es.logger.Error("No events present", "err", err.Error())
-		return response, errNoEvents
-	}
-	if err != nil {
-		es.logger.Error("Error listing events", "err", err.Error())
-		return
-	}
+	/*
+		events, err := es.store.ListEvents(ctx, es.collection)
+		if err == db.ErrEventNotExist {
+			es.logger.Error("No events present", "err", err.Error())
+			return response, errNoEvents
+		}
+		if err != nil {
+			es.logger.Error("Error listing events", "err", err.Error())
+			return
+		}
 
-	response.Events = events
+		response.Events = events
+	*/
 	return
 }
 
@@ -61,6 +63,8 @@ func (es *eventService) create(ctx context.Context, c createRequest) (response c
 		RegisterBefore:    c.RegisterBefore,
 		CreatedBy:         ctx.Value("currentUser").(db.User).ID,
 	})
+
+	mailer.NotifyAll()
 
 	if err != nil {
 		es.logger.Error("Error creating event", "err", err.Error())
