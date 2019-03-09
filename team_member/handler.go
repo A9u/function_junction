@@ -2,24 +2,27 @@ package team_member
 
 import (
 	"encoding/json"
-	"net/http"
 	"fmt"
 	"github.com/A9u/function_junction/api"
 	"github.com/gorilla/mux"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
-
+	"net/http"
 )
 
 func Create(service Service) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		var c createRequest
-		err := json.NewDecoder(req.Body).Decode(&c)
+
+		queryParams := mux.Vars(req)
+		teamID, err := primitive.ObjectIDFromHex(queryParams["team_id"])
+		fmt.Println("receoved params teamid", teamID)
+		err = json.NewDecoder(req.Body).Decode(&c)
 		if err != nil {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return
 		}
 
-		err = service.create(req.Context(), c)
+		msg, err := service.create(req.Context(), c, teamID)
 		if isBadRequest(err) {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return
@@ -30,7 +33,7 @@ func Create(service Service) http.HandlerFunc {
 			return
 		}
 
-		api.Success(rw, http.StatusCreated, api.Response{Message: "Created Successfully"})
+		api.Success(rw, http.StatusCreated, api.Response{Message: msg})
 	})
 }
 
@@ -94,7 +97,7 @@ func DeleteByID(service Service) http.HandlerFunc {
 	})
 }
 
-func Update(service Service, ) http.HandlerFunc {
+func Update(service Service) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
 		id, err := primitive.ObjectIDFromHex(vars["team_member_id"])
@@ -109,7 +112,7 @@ func Update(service Service, ) http.HandlerFunc {
 			return
 		}
 
-		err = service.update(req.Context(), c ,id)
+		err = service.update(req.Context(), c, id)
 		if isBadRequest(err) {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return
@@ -125,5 +128,5 @@ func Update(service Service, ) http.HandlerFunc {
 }
 
 func isBadRequest(err error) bool {
-	return err == errEmptyName || err == errEmptyID
+	return err == errEmptyID || err == errEmptyEmail
 }
