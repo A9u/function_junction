@@ -3,7 +3,6 @@ package team_member
 import (
 	// "regexp"
 	"github.com/A9u/function_junction/db"
-	"github.com/mongodb/mongo-go-driver/bson/primitive"
 )
 
 type updateRequest struct {
