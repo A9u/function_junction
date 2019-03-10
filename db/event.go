@@ -67,15 +67,21 @@ func (s *store) ListEvents(ctx context.Context, collection *mongo.Collection) (e
 	for cur.Next(ctx) {
 		var elem Event
 		err = cur.Decode(&elem)
-    user, _ := FindUserByID(ctx, elem.CreatedBy)
-    fmt.Println(user)
-    creatorInfo := CreatorInfo{FirstName: user.FirstName, LastName: user.LastName, UserID: user.ID}
-    event := EventInfo{Event: &elem, CreatorInfo: creatorInfo, NumberOfParticipants: 5, IsAttending: true}
-    eventsInfo = append(eventsInfo, &event)
+	    user, _ := FindUserByID(ctx, elem.CreatedBy)
+	    participants := 0
+	    if elem.IsIndividualEvent{
+	    	participants = s.NumberOfIndividualsAttendingEvent(ctx, elem.ID)
+	    } else {
+	    	teams, _ := s.ListTeams(ctx, app.GetCollection("teams"), elem.ID)
+	    	participants = len(teams)
+	    }
+    	attending := s.IsAttendingEvent(ctx, elem.ID)
+    	creatorInfo := CreatorInfo{FirstName: user.FirstName, LastName: user.LastName, UserID: user.ID}
+    	event := EventInfo{Event: &elem, CreatorInfo: creatorInfo, NumberOfParticipants: participants, IsAttending: attending}
+    	eventsInfo = append(eventsInfo, &event)
 	}
 	if err := cur.Err(); err != nil {
 	}
-
 	return eventsInfo, err
 }
 

@@ -143,3 +143,34 @@ func (s *store) FindTeamMemberByInviteeIDEventID(ctx context.Context, inviteeID 
 
 	return teamMember, err
 }
+
+func (s *store) IsAttendingEvent(ctx context.Context, eventID primitive.ObjectID) (is_present bool){
+	collection := app.GetCollection("team_members")
+	currentUserID := ctx.Value("currentUser").(User).ID
+	err := collection.FindOne(ctx, bson.D{{"event_id", eventID}, {"status", "accepted"}, {"inviter_id", currentUserID}})
+	if err != nil {
+		err = collection.FindOne(ctx, bson.D{{"event_id", eventID}, {"status", "accepted"}, {"invitee_id", currentUserID}})
+		if err != nil{
+			is_present = false
+		} else {
+			is_present = true
+		}
+	} else {
+		is_present = true
+	}
+	return
+}
+
+func (s *store) NumberOfIndividualsAttendingEvent(ctx context.Context, eventID primitive.ObjectID) (count int){
+	collection := app.GetCollection("team_members")
+	cur, _ := collection.Find(ctx, bson.D{{"event_id", eventID}, {"status", "accepted"}})
+	defer cur.Close(ctx)
+	var teamMembers []*TeamMemberInfo
+	for cur.Next(ctx) {
+		var elem TeamMember
+		teamMemberInfo := TeamMemberInfo{ TeamMember: elem, InviteeName: "test", InviterName: "inviter" }
+		teamMembers = append(teamMembers, &teamMemberInfo)
+	}
+	count =  len(teamMembers)
+	return
+}
