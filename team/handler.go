@@ -37,7 +37,9 @@ func Create(service Service) http.HandlerFunc {
 
 func List(service Service) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		resp, err := service.list(req.Context())
+		vars := mux.Vars(req)
+		eventID, err := primitive.ObjectIDFromHex(vars["event_id"])
+		resp, err := service.list(req.Context(), eventID)
 		if err == errNoTeams {
 			api.Error(rw, http.StatusNotFound, api.Response{Message: err.Error()})
 			return

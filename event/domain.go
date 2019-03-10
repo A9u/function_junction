@@ -7,57 +7,80 @@ import (
 )
 
 type updateRequest struct {
-	Title             string    `json:"title"`
-	Description       string    `json:"description"`
-	StartDateTime     time.Time `json:"startDateTime"`
-	EndDateTime       time.Time `json:"endDateTime"`
-	IsShowcasable     bool      `json:"isShowcasable"`
-	IsIndividualEvent bool      `json:"isIndividualParticipation"`
-	MaxSize           int       `json:"maxSize"`
-	MinSize           int       `json:"minSize"`
-	IsPublished       bool      `json:"isPublished"`
-	Venue             string    `json:"venue"`
-	UpdatedAt         time.Time `db:"updatedAt"`
-	RegisterBefore    time.Time `db:"registerBefore"`
-	Set               db.Event  `json:"$set"`
+	Title             string        `json:"title"`
+	Description       string        `json:"description"`
+	StartDateTime     time.Time     `json:"start_date_time"`
+	EndDateTime       time.Time     `json:"end_date_time"`
+	IsShowcasable     bool          `json:"is_showcasable"`
+	IsIndividualEvent bool          `json:"is_individual_participation"`
+	MaxSize           int           `json:"max_size"`
+	MinSize           int           `json:"min_size"`
+	IsPublished       bool          `json:"is_published"`
+	Venue             string        `json:"venue"`
+	UpdatedAt         time.Time     `json:"updated_at"`
+	RegisterBefore    time.Time     `json:"register_before"`
+	Set  db.Event `json:"$set"`
 }
 
 type createRequest struct {
-	ID                primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
-	Title             string             `json:"title"`
-	Description       string             `json:"description"`
-	StartDateTime     time.Time          `json:"startDateTime"`
-	EndDateTime       time.Time          `json:"endDateTime"`
-	IsShowcasable     bool               `json:"isShowcasable"`
-	IsIndividualEvent bool               `json:"isIndividualParticipation"`
-	CreatedBy         primitive.ObjectID `json:"createdBy" bson:"createdBy"`
-	MaxSize           int                `json:"maxSize"`
-	MinSize           int                `json:"minSize"`
-	IsPublished       bool               `json:"isPublished"`
-	Venue             string             `json:"venue"`
-	CreatedAt         time.Time          `db:"createdAt"`
-	RegisterBefore    time.Time          `db:"registerBefore"`
+	Title             string        `json:"title"`
+	Description       string        `json:"description"`
+	StartDateTime     time.Time     `json:"start_date_time"`
+	EndDateTime       time.Time     `json:"end_date_time"`
+	IsShowcasable     bool          `json:"is_showcasable"`
+	IsIndividualEvent bool          `json:"is_individual_participation"`
+	CreatedBy         primitive.ObjectID  `json:"created_by" bson:"created_by"`
+	MaxSize           int           `json:"max_size"`
+	MinSize           int           `json:"min_size"`
+	IsPublished       bool          `json:"is_published"`
+	Venue             string        `json:"venue"`
+	CreatedAt         time.Time     `json:"created_at"`
+	RegisterBefore    time.Time     `json:"register_before"`
 }
 
-type findByIDResponse struct {
-	Event db.Event `json:"event"`
-}
 
 type listResponse struct {
 	Events []*db.EventInfo `json:"events"`
 }
 
-func (cr createRequest) Validate() (err error) {
+type eventResponse struct {
+	Event *db.EventInfo `json:"event"`
+}
+
+func (cr createRequest) CreateValidate() (err error) {
 	if cr.Title == "" {
 		return errEmptyTitle
+	}
+
+	if cr.EndDateTime.IsZero() || cr.StartDateTime.IsZero() {
+		return errEmptyDate
+	}
+
+	if cr.IsIndividualEvent == false && (cr.MaxSize == 0 || cr.MinSize == 0){
+		return errEmptyTeamSize
+	}
+
+	if cr.IsIndividualEvent == false && (cr.MinSize > cr.MaxSize){
+		return errEmptyTeamSize
 	}
 	return
 }
 
-type createResponse struct {
-	Event *db.Event `json:"event"`
-}
+func (cr updateRequest) UpdateValidate() (err error) {
+	if cr.Title == "" {
+		return errEmptyTitle
+	}
 
-type updateResponse struct {
-	Event *db.Event `json:"event"`
+	if cr.EndDateTime.IsZero() || cr.StartDateTime.IsZero() {
+		return errEmptyDate
+	}
+
+	if cr.IsIndividualEvent == false && (cr.MaxSize == 0 || cr.MinSize == 0){
+		return errEmptyTeamSize
+	}
+
+	if cr.IsIndividualEvent == false && (cr.MinSize > cr.MaxSize){
+		return errInvalidTeamSize
+	}
+	return
 }

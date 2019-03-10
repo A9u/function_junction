@@ -35,10 +35,10 @@ func (s *store) CreateTeam(ctx context.Context, collection *mongo.Collection, te
 	return team, err
 }
 
-func (s *store) ListTeams(ctx context.Context, collection *mongo.Collection) (teams []*Team, err error) {
+func (s *store) ListTeams(ctx context.Context, collection *mongo.Collection, eventID primitive.ObjectID) (teams []*Team, err error) {
 	// findOptions := options.Find()
 	fmt.Println(collection)
-	cur, err := collection.Find(ctx, bson.D{})
+	cur, err := collection.Find(ctx, bson.D{{"eventid", eventID}})
 	fmt.Println(cur)
 	fmt.Println(err)
 	if err != nil {
