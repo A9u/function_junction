@@ -114,7 +114,6 @@ func (es *eventService) deleteByID(ctx context.Context, id primitive.ObjectID) (
 		es.logger.Error("Error deleting Event - ", "err", err.Error(), "event_id", id)
 		return
 	}
-
 	return
 }
 
