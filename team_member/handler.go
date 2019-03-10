@@ -42,13 +42,39 @@ func List(service Service) http.HandlerFunc {
 		vars := mux.Vars(req)
 		fmt.Println("team", vars["team_id"])
 		id, err := primitive.ObjectIDFromHex(vars["team_id"])
+		eventID, err := primitive.ObjectIDFromHex(vars["event_id"])
 		fmt.Println("id", id)
 		if err != nil {
 			api.Error(rw, http.StatusInternalServerError, api.Response{Message: err.Error()})
 			return
 		}
 
-		resp, err := service.list(req.Context(), id)
+		resp, err := service.list(req.Context(), id, eventID)
+		if err == errNoTeamMember {
+			api.Error(rw, http.StatusNotFound, api.Response{Message: err.Error()})
+			return
+		}
+		if err != nil {
+			api.Error(rw, http.StatusInternalServerError, api.Response{Message: err.Error()})
+			return
+		}
+
+		api.Success(rw, http.StatusOK, resp)
+	})
+}
+
+
+func FindListOfInviters(service Service) http.HandlerFunc {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		fmt.Println("event", vars["event_id"])
+		eventID, err := primitive.ObjectIDFromHex(vars["event_id"])
+		if err != nil {
+			api.Error(rw, http.StatusInternalServerError, api.Response{Message: err.Error()})
+			return
+		}
+
+		resp, err := service.findListOfInviters(req.Context(), eventID)
 		if err == errNoTeamMember {
 			api.Error(rw, http.StatusNotFound, api.Response{Message: err.Error()})
 			return
