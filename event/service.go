@@ -128,7 +128,7 @@ func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection) Service 
 func notifyAll(event *db.Event, currentUser db.User) {
 	mail := mailer.Email{}
 	mail.From = currentUser.Email
-	mail.To = []string{"all@joshsoftware.com"}
+	mail.To = []string{config.AllEmail()}
 	mail.Subject = "New Event added - " + event.Title
 	mail.Body = "A new event <b>" + event.Title + "</b> has been added. " +
 		"<p> It is at " + event.Venue + " from " + event.StartDateTime.Format(time.ANSIC) + " to " +
@@ -149,7 +149,7 @@ func notifyOthers(oldEvent db.Event, newEvent *db.Event, currentUser db.User) {
 func notifyChange(event *db.Event, currentUser db.User) {
 	mail := mailer.Email{}
 	mail.From = currentUser.Email
-	mail.To = []string{"all@joshsoftware.com"}
+	mail.To = []string{config.AllEmail()}
 
 	mail.Subject = "Event - " + event.Title + " has been updated"
 
