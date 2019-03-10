@@ -36,12 +36,12 @@ type Storer interface {
 	
   // TeamMember
 	CreateTeamMember(ctx context.Context, collection *mongo.Collection, teamMember *TeamMember) (createdTeamMember TeamMember, err error)
-	ListTeamMember(ctx context.Context, teamID primitive.ObjectID, collection *mongo.Collection) (teamMembers []*TeamMemberInfo, err error)
+	ListTeamMember(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID, collection *mongo.Collection, userCollection *mongo.Collection, eventCollection *mongo.Collection, teamCollection *mongo.Collection) (teamMembers []*TeamMemberInfo, err error)
 	FindTeamMemberByID(ctx context.Context, teamMemberID primitive.ObjectID, collection *mongo.Collection) (teamMember TeamMember, err error)
 	DeleteTeamMemberByID(ctx context.Context, teamMemberID primitive.ObjectID, collection *mongo.Collection) (err error)
 	UpdateTeamMember(ctx context.Context, teamMemberID primitive.ObjectID, collection *mongo.Collection, teamMember *TeamMember) (updatedTeamMember TeamMember, err error)
 	
-
+	FindListOfInviters(ctx context.Context, currentUser User, userCollection *mongo.Collection, collection *mongo.Collection, eventID primitive.ObjectID) (invitersInfo []*InviterInfo, err error)
 	FindTeamMemberByInviteeIDEventID(ctx context.Context, inviteeID primitive.ObjectID, eventID primitive.ObjectID, collection *mongo.Collection) (teamMember *TeamMember, err error)
 	// User
 	//FindUserByID(userID primitive.ObjectID) (user User, err error)

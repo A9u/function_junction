@@ -15,11 +15,12 @@ import (
 )
 
 type Service interface {
-	list(ctx context.Context, teamID  primitive.ObjectID) (response listResponse, err error)
+	list(ctx context.Context, teamID  primitive.ObjectID, eventID primitive.ObjectID) (response listResponse, err error)
 	create(ctx context.Context, req createRequest, teamID primitive.ObjectID) (response createResponse, err error)
 	findByID(ctx context.Context, teamMemberID primitive.ObjectID) (response findByIDResponse, err error)
 	deleteByID(ctx context.Context, teamMemberID primitive.ObjectID) (err error)
 	update(ctx context.Context, req updateRequest, teamMemberID primitive.ObjectID, teamID primitive.ObjectID, eventID primitive.ObjectID) (response updateResponse, err error)
+	findListOfInviters(ctx context.Context, eventID primitive.ObjectID) (response InviterslistResponse, err error)
 }
 
 type teamMemberService struct {
@@ -31,8 +32,8 @@ type teamMemberService struct {
 	eventCollection *mongo.Collection
 }
 
-func (tms *teamMemberService) list(ctx context.Context, teamID primitive.ObjectID) (response listResponse, err error) {
-	teamMembers, err := tms.store.ListTeamMember(ctx, teamID, tms.collection)
+func (tms *teamMemberService) list(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID) (response listResponse, err error) {
+	teamMembers, err := tms.store.ListTeamMember(ctx, teamID, eventID, tms.collection, tms.userCollection, tms.eventCollection, tms.teamCollection)
 	if err == db.ErrTeamMemberNotExist {
 		tms.logger.Error("No team members added", "err", err.Error())
 		return response, errNoTeamMember
@@ -45,6 +46,23 @@ func (tms *teamMemberService) list(ctx context.Context, teamID primitive.ObjectI
 	response.TeamMembers = teamMembers
 	return
 }
+
+func (tms *teamMemberService) findListOfInviters(ctx context.Context, eventID primitive.ObjectID) (response InviterslistResponse, err error) {
+	currentUser := ctx.Value("currentUser").(db.User)
+	invitersInfo, err := tms.store.FindListOfInviters(ctx, currentUser, tms.userCollection,  tms.collection, eventID)
+	// if err == db.ErrTeamMemberNotExist {
+	// 	tms.logger.Error("No team members added", "err", err.Error())
+	// 	return response, errNoTeamMember
+	// }
+	if err != nil {
+		tms.logger.Error("Error listing Inviters Info", "err", err.Error())
+		return
+	}
+	fmt.Println("team_members",invitersInfo)
+	response.InvitersInfo = invitersInfo
+	return
+}
+
 
 func (tms *teamMemberService) create(ctx context.Context, tm createRequest, teamID primitive.ObjectID) (response createResponse, err error) {
 	err = tm.Validate()
@@ -115,30 +133,32 @@ func (tms *teamMemberService) update(ctx context.Context, tm updateRequest, id p
 		tms.logger.Error("Invalid Request for team member update", "err", err.Error(), "team member", tm)
 		return
 	}
-	// currentUser := ctx.Value("currentUser").(db.User)
+
+	currentUser := ctx.Value("currentUser").(db.User)
 	
-	user, err := db.FindUserByID(ctx, tm.InviterID)
-	fmt.Println("User", user)
+	teamMember, err := tms.store.FindTeamMemberByID(ctx, id, tms.collection)
+	fmt.Println("teamMember", teamMember )
 	if err != nil{
-		tms.logger.Error("Inviter Does not Exist in Db")
-		err = errInviterDoesNotExist
+		tms.logger.Error("Team Member Does not Exist in Db")
+		err = errTeamMemberDoesNotExist
 		return
 	}
-	Event, err := tms.store.FindEventByID(ctx , eventID, tms.eventCollection)
+
+	event, err := tms.store.FindEventByID(ctx , eventID, tms.eventCollection)
 	if err!= nil {
 		tms.logger.Error("Event Does not Exist in Db")
 		err = errEventDoesNotExist
 		return
 	}
-	fmt.Println("event", Event.ID)
+	fmt.Println("event", event.ID)
 
-	Team,  err := tms.store.FindTeamByID(ctx, teamID, tms.teamCollection)
+	team,  err := tms.store.FindTeamByID(ctx, teamID, tms.teamCollection)
 	if err!= nil {
 		tms.logger.Error("Team Does not Exist in Db")
 		err = errTeamDoesNotExist
 		return
 	}
-	fmt.Println("event", Team.ID)
+	fmt.Println("team", team.ID)
 
 	if err != nil{
 		tms.logger.Error("Team Not Present", err.Error())
@@ -146,24 +166,23 @@ func (tms *teamMemberService) update(ctx context.Context, tm updateRequest, id p
 		return
 	}
 	if tm.Status == "accept"{
-		result, _ :=   tms.store.IsTeamComplete(ctx, tms.collection, tm.TeamID, tm.EventID)
+		result, _ :=   tms.store.IsTeamComplete(ctx, tms.collection, teamID, eventID)
 		if result ==  true {
 			tms.logger.Error("Team is Already Complete")
 			return 
 		}
 	}
-	teamMember, err := tms.store.UpdateTeamMember(ctx, id, tms.collection, &db.TeamMember{ Status: tm.Status, InviterID: user.ID, TeamID: tm.TeamID, EventID: tm.EventID})
+	teamMemberInfo, err := tms.store.UpdateTeamMember(ctx, id, tms.collection, &db.TeamMember{ Status: tm.Status, InviterID: teamMember.InviterID, InviteeID: teamMember.InviteeID, TeamID: teamID, EventID: eventID})
 	if err != nil {
 		tms.logger.Error("Error updating team member", "err", err.Error(), "team member", tm)
 		return
 	}
-	// notifyTeamMembers(invitees, team, currentUser, team.EventID)
-	// subject := currentUser.Email + " has " + tm.Status + " your Invite"
-	// body := "Click on Link to see Event and Team details"
-	// mailer.SendEmailTo("priyanka216668@gmail.com", user.Email, subject, body)
-	//mailer.NotifyAll()
+
+	// inviter, err := db.FindUserByID(ctx, teamMember.InviterID)
+	inviter := db.User{}
+	notifyTeamMemberInvitationStatus(inviter, currentUser, team, teamMember)
 	
-	response.TeamMember = teamMember
+	response.TeamMember = teamMemberInfo
 	return
 }
 
@@ -208,6 +227,16 @@ func notifyTeamMembers(invitees []string, team *db.Team, currentUser db.User, ev
 	mail.Body = "I have invited you to join my team <b>" + team.Name + "</b>." +
 		"<p> Please click <a href=" + config.URL() + "events/" + getStringID(eventID) + " > here </a>. to see more details. <p>"
 
+	mail.Send()
+}
+
+func notifyTeamMemberInvitationStatus(inviter db.User, invitee db.User, team *db.Team, teamMember db.TeamMember) {
+	mail := mailer.Email{}
+	mail.From = "priyanka@joshsoftware.com"//invitee.Email//currentUser.Email
+	mail.To = []string{ "tanya@joshsoftware.com"} //inviter.Email
+	fmt.Println(mail.To)
+	mail.Subject = "Invitation " + teamMember.Status + "By" + invitee.Email
+	mail.Body = "I have " + teamMember.Status + " your invitation  to join  team <b>" + team.Name + "</b>."
 	mail.Send()
 }
 

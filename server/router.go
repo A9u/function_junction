@@ -34,10 +34,12 @@ func initRouter(dep dependencies) (router *mux.Router) {
 	// TeamMember
 	router.HandleFunc("/events/{event_id}/teams/{team_id}/team_members", team_member.Create(dep.TeamMemberService)).Methods(http.MethodPost).Headers(versionHeader, v1)
 	router.HandleFunc("/events/{event_id}/teams/{team_id}/team_members", team_member.List(dep.TeamMemberService)).Methods(http.MethodGet).Headers(versionHeader, v1)
+	router.HandleFunc("/events/{event_id}/attendees", team_member.List(dep.TeamMemberService)).Methods(http.MethodGet).Headers(versionHeader, v1)
+
 	router.HandleFunc("/events/{event_id}/teams/{team_id}/team_members/{team_member_id}", team_member.FindByID(dep.TeamMemberService)).Methods(http.MethodGet).Headers(versionHeader, v1)
 	router.HandleFunc("/events/{event_id}/teams/{team_id}/team_members/{team_member_id}", team_member.DeleteByID(dep.TeamMemberService)).Methods(http.MethodDelete).Headers(versionHeader, v1)
 	router.HandleFunc("/events/{event_id}/teams/{team_id}/team_members/{team_member_id}", team_member.Update(dep.TeamMemberService)).Methods(http.MethodPut).Headers(versionHeader, v1)
-
+	router.HandleFunc("/events/{event_id}/invited_by/", team_member.FindListOfInviters(dep.TeamMemberService)).Methods(http.MethodGet).Headers(versionHeader, v1)
 	sh := http.StripPrefix("/docs/", http.FileServer(http.Dir("./swaggerui/")))
 	router.PathPrefix("/docs/").Handler(sh)
 	return

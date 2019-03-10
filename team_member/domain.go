@@ -7,11 +7,7 @@ import (
 )
 
 type updateRequest struct {
-	Name      string             `json:"name"`
 	Status    string             `json:"status"`
-	InviterID primitive.ObjectID `json:"inviter_id"`
-	TeamID    primitive.ObjectID `json:"team_id"`
-	EventID   primitive.ObjectID `json:"event_id"`
 }
 
 type createRequest struct {
@@ -19,7 +15,9 @@ type createRequest struct {
 	TeamID primitive.ObjectID `json:"team_id"`
 }
 
-
+type InviterslistResponse struct {
+	InvitersInfo []*db.InviterInfo `json:"Inviters"`
+}
 
 type findByIDResponse struct {
 	TeamMember db.TeamMember `json:"team_member"`
@@ -46,8 +44,8 @@ func (cr createRequest) Validate() (err error) {
 }
 
 func (ur updateRequest) Validate() (err error) {
-	if ur.Name == "" {
-		return errEmptyName
+	if ur.Status == "" {
+		return errEmptyStatus
 	}
 	
 	// re := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@joshsoftware.com$")
