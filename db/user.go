@@ -22,6 +22,13 @@ type publicProfile struct {
   LastName string  `json:"last_name" bson:"last_name"`
 }
 
+type UserInfo struct {
+  UserID      primitive.ObjectID  `json:"user_id"`
+  FirstName   string        `json:"first_name"`
+  LastName  string        `json:"last_name"`
+  Email     string        `json:"email"`
+}
+
 func name(publicProfileData interface{}) {
   //publicProfileRes, err := publicProfileData.(publicProfile)
 }
