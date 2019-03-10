@@ -8,6 +8,7 @@ import (
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
+  "github.com/A9u/function_junction/app"
 )
 
 type Team struct {
@@ -39,7 +40,8 @@ func (s *store) CreateTeam(ctx context.Context, collection *mongo.Collection, te
 	id := res.InsertedID
 	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&team)
   creatorInfo, _ := FindUserInfoByID(ctx, team.CreatorID)
-  CreateTeamMember(ctx, app.GetCollection("team_members"), TeamMember{teamID: team.ID, InviteeID: , status: 'Accepted'})
+  teamMember := TeamMember{TeamID: team.ID, Status: "Accepted", InviteeID: team.CreatorID, EventID: team.EventID}
+  s.CreateTeamMember(ctx, app.GetCollection("team_members"), &teamMember)
   teamInfo := TeamInfo{Team: team, CreatorInfo: creatorInfo}
 	return &teamInfo, err
 }
