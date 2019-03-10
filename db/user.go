@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-  "fmt"
 	"github.com/A9u/function_junction/app"
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
