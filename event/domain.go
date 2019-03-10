@@ -43,6 +43,10 @@ type listResponse struct {
 	Events []*db.EventInfo `json:"events"`
 }
 
+type eventResponse struct {
+	Event *db.EventInfo `json:"event"`
+}
+
 func (cr createRequest) CreateValidate() (err error) {
 	if cr.Title == "" {
 		return errEmptyTitle
@@ -79,14 +83,4 @@ func (cr updateRequest) UpdateValidate() (err error) {
 		return errInvalidTeamSize
 	}
 	return
-}
-
-type EventResponse struct {
-	Event 					*db.Event   `json:"event"`
-	NumberOfParticipants	int 		`json:"number_of_participants"`
-}
-
-type FindEventResponse struct {
-	Event 					db.Event    `json:"event"`
-	NumberOfParticipants	int 		`json:"number_of_participants"`
 }

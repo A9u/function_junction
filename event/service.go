@@ -14,10 +14,10 @@ import (
 
 type Service interface {
 	list(ctx context.Context) (response listResponse, err error)
-	create(ctx context.Context, req createRequest) (response EventResponse, err error)
-	findByID(ctx context.Context, eventID primitive.ObjectID) (response FindEventResponse, err error)
+	create(ctx context.Context, req createRequest) (response eventResponse, err error)
+	findByID(ctx context.Context, eventID primitive.ObjectID) (response eventResponse, err error)
 	deleteByID(ctx context.Context, eventID primitive.ObjectID) (err error)
-	update(ctx context.Context, req updateRequest, eventID primitive.ObjectID) (response EventResponse, err error)
+	update(ctx context.Context, req updateRequest, eventID primitive.ObjectID) (response eventResponse, err error)
 }
 
 type eventService struct {
@@ -42,14 +42,14 @@ func (es *eventService) list(ctx context.Context) (response listResponse, err er
 	return
 }
 
-func (es *eventService) create(ctx context.Context, c createRequest) (response EventResponse, err error) {
+func (es *eventService) create(ctx context.Context, c createRequest) (response eventResponse, err error) {
 	err = c.CreateValidate()
 	if err != nil {
 		es.logger.Error("Invalid request for event create", "msg", err.Error(), "event", c)
 		return
 	}
 	currentUser := ctx.Value("currentUser").(db.User)
-	event, err := es.store.CreateEvent(ctx, es.collection, &db.Event{
+	event_info, err := es.store.CreateEvent(ctx, es.collection, &db.Event{
 		Title: c.Title,
 		Description: c.Description,
 		StartDateTime: c.StartDateTime,
@@ -68,28 +68,26 @@ func (es *eventService) create(ctx context.Context, c createRequest) (response E
 		es.logger.Error("Error creating event", "err", err.Error())
 		return
 	}
-	response = eventToResponse(event)
 
-	if event.IsPublished {
-		notifyAll(event, currentUser)
+	if event_info.IsPublished {
+		notifyAll(event_info, currentUser)
 	}
 
-	response.Event = event
+	response.Event = event_info
 	return
 }
 
-func (es *eventService) findByID(ctx context.Context, id primitive.ObjectID) (response FindEventResponse, err error) {
-	event, err := es.store.FindEventByID(ctx, id, es.collection)
+func (es *eventService) findByID(ctx context.Context, id primitive.ObjectID) (response eventResponse, err error) {
+	event_info, err := es.store.FindEventByID(ctx, id, es.collection)
 	if err != nil {
 		es.logger.Error("Error finding Event - ", "err", err.Error(), "event_id", id)
 		return
 	}
-	response.Event = event
-	response.NumberOfParticipants = 5
+	response.Event = event_info
 	return
 }
 
-func (es *eventService) update(ctx context.Context, eu updateRequest, id primitive.ObjectID) (response EventResponse, err error) {
+func (es *eventService) update(ctx context.Context, eu updateRequest, id primitive.ObjectID) (response eventResponse, err error) {
 
 	c_id := ctx.Value("currentUser").(db.User).ID
 	oldEvent, err := es.store.FindEventByID(ctx, id, es.collection)
@@ -107,7 +105,7 @@ func (es *eventService) update(ctx context.Context, eu updateRequest, id primiti
 		es.logger.Error("Invalid request for event update", "msg", err.Error(), "event", eu)
 		return
 	}
-	event, err := es.store.UpdateEvent(ctx, id, es.collection, &db.Event{
+	event_info, err := es.store.UpdateEvent(ctx, id, es.collection, &db.Event{
 		Title: eu.Title,
 		Description: eu.Description,
 		Venue: eu.Venue,
@@ -122,8 +120,8 @@ func (es *eventService) update(ctx context.Context, eu updateRequest, id primiti
 	})
 
 	currentUser := ctx.Value("currentUser").(db.User)
-	notifyOthers(oldEvent, event, currentUser)
-	response = eventToResponse(event)
+	notifyOthers(oldEvent, event_info, currentUser)
+	response.Event = event_info
 	return
 }
 
@@ -145,13 +143,7 @@ func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection) Service 
 	}
 }
 
-func eventToResponse(event *db.Event) (response EventResponse){
-	response.Event = event
-	response.NumberOfParticipants = 5
-	return
-}
-
-func notifyAll(event *db.Event, currentUser db.User) {
+func notifyAll(event *db.EventInfo, currentUser db.User) {
 	mail := mailer.Email{}
 	mail.From = currentUser.Email
 	mail.To = []string{"all@joshsoftware.com"}
@@ -164,7 +156,7 @@ func notifyAll(event *db.Event, currentUser db.User) {
 	mail.Send()
 }
 
-func notifyOthers(oldEvent db.Event, newEvent *db.Event, currentUser db.User) {
+func notifyOthers(oldEvent *db.EventInfo, newEvent *db.EventInfo, currentUser db.User) {
 	if !oldEvent.IsPublished && newEvent.IsPublished {
 		notifyAll(newEvent, currentUser)
 	} else if oldEvent.Venue != newEvent.Venue || oldEvent.StartDateTime != newEvent.StartDateTime || oldEvent.EndDateTime != newEvent.EndDateTime {
@@ -172,7 +164,7 @@ func notifyOthers(oldEvent db.Event, newEvent *db.Event, currentUser db.User) {
 	}
 }
 
-func notifyChange(event *db.Event, currentUser db.User) {
+func notifyChange(event *db.EventInfo, currentUser db.User) {
 	mail := mailer.Email{}
 	mail.From = currentUser.Email
 	mail.To = []string{"all@joshsoftware.com"}

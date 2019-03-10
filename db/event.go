@@ -29,12 +29,14 @@ type Event struct {
 }
 
 type EventInfo struct {
-  Event
-  UserFirstName         string
-  UserLastName          string
+  *Event
+  UserFirstName         string		`json:"first_name"`
+  UserLastName          string		`json:"last_name"`
+  NumberOfParticipants	int 		`json:"number_of_participants"`
+  IsAttending			bool		`json:"is_attending"`
 }
 
-func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, event *Event) (created_event *Event, err error) {
+func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, event *Event) (created_event *EventInfo, err error) {
 	event.CreatedAt = time.Now()
 	if event.IsIndividualEvent == true{
 		event.MinSize = 0
@@ -44,7 +46,8 @@ func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, e
 
 	id := res.InsertedID
 	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&event)
-	return event, err
+	event_info := EventInfo{Event: event}
+	return &event_info, err
 }
 
 func (s *store) ListEvents(ctx context.Context, collection *mongo.Collection) (eventsInfo []*EventInfo, err error) {
@@ -59,7 +62,7 @@ func (s *store) ListEvents(ctx context.Context, collection *mongo.Collection) (e
 		err = cur.Decode(&elem)
     user, _ := FindUserByID(ctx, elem.CreatedBy)
     fmt.Println(user)
-    event := EventInfo{Event: elem, UserFirstName: user.FirstName, UserLastName: user.LastName}
+    event := EventInfo{Event: &elem, UserFirstName: user.FirstName, UserLastName: user.LastName, NumberOfParticipants: 5, IsAttending: true}
     eventsInfo = append(eventsInfo, &event)
 	}
 	if err := cur.Err(); err != nil {
@@ -68,9 +71,11 @@ func (s *store) ListEvents(ctx context.Context, collection *mongo.Collection) (e
 	return eventsInfo, err
 }
 
-func (s *store) FindEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (event Event, err error) {
+func (s *store) FindEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (show_event *EventInfo, err error) {
+	var event *Event
 	err = collection.FindOne(ctx, bson.D{{"_id", eventID}}).Decode(&event)
-	return event, err
+	event_info := EventInfo{Event: event}
+	return &event_info, err
 }
 
 func (s *store) DeleteEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (err error) {
@@ -78,7 +83,7 @@ func (s *store) DeleteEventByID(ctx context.Context, eventID primitive.ObjectID,
 	return err
 }
 
-func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, collection *mongo.Collection, event *Event) (updated_event *Event, err error) {
+func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, collection *mongo.Collection, event *Event) (updated_event *EventInfo, err error) {
 	_, err = collection.UpdateOne(ctx, bson.D{{"_id", id}}, bson.D{{"$set",
 		bson.D{ { "title", event.Title },
 				{ "description", event.Description },
@@ -93,5 +98,6 @@ func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, collecti
 				{ "register_before", event.RegisterBefore },
 				{ "updated_at", time.Now() }, }, },})
 	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&event)
-	return event, err
+	event_info := EventInfo{Event: event}
+	return &event_info, err
 }
