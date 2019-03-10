@@ -2,7 +2,8 @@ package db
 
 import (
 	"context"
-	"github.com/A9u/function_junction/app"
+	
+  "github.com/A9u/function_junction/app"
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
@@ -10,21 +11,25 @@ import (
 
 type User struct {
 	ID    primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
-  FirstName  string         `bson:"first_name" json:"public_profile"`
+  FirstName  string         `json:"public_profile.first_name"`
 	LastName  string             `json:"last_name"`
-  PublicProfile publicProfile         `json: "public_profile" bson:"public_profile"`
+  PublicProfile interface{} `json:"public_profile" bson:"public_profile"`
 	Email string             `json:"email"`
 }
 
 type publicProfile struct {
-  FirstName string `json:"first_name"`
-  LastName string  `json:"last_name"`
+  FirstName string `json:"first_name" bson:"first_name"`
+  LastName string  `json:"last_name" bson:"last_name"`
 }
+
+func name(publicProfileData interface{}) {
+  //publicProfileRes, err := publicProfileData.(publicProfile)
+}
+
 func FindUserByID(ctx context.Context, userID primitive.ObjectID) (userDetails User, err error) {
 	collection := app.GetCollection("users")
 	err = collection.FindOne(ctx, bson.D{{"_id", userID}}).Decode(&userDetails)
-  userDetails.FirstName = "test"
-  userDetails.LastName = "test"
+  name(userDetails.PublicProfile)
 	return userDetails, err
 }
 
