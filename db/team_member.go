@@ -218,3 +218,14 @@ func (s *store) FindListOfInviters(ctx context.Context, currentUser User, userCo
 	}
 	return invitersInfo, err
 }
+
+func (s *store) FindTeamMemberByInviteeIDTeamID(ctx context.Context, teamID primitive.ObjectID, inviteeID primitive.ObjectID, collection *mongo.Collection) (teamMember *TeamMember, err error) {
+
+	err = collection.FindOne(ctx, bson.D{{"invitee_id", inviteeID}, {"team_id", teamID}, {"status", "accepted"}}).Decode(&teamMember)
+	if err != nil {
+		fmt.Println("Error During Finding team member: ", err)
+		return
+	}
+
+	return teamMember, err
+}

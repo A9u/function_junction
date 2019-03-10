@@ -80,6 +80,13 @@ func (tms *teamMemberService) create(ctx context.Context, tm createRequest, team
 	currentUser := ctx.Value("currentUser").(db.User)
 
 	// TODO: assign empty variables like: var foo string
+	_, err := tms.store.FindTeamMemberByInviteeIDEventID(ctx, teamID, currentUser.ID, tms.collection)
+
+	if err != nil {
+		tms.logger.Errorw("Only accepted members can invite", "msg", err.Error(), "team member", tm)
+		return
+	}
+
 	userErrEmails := ""
 	userEmails := ""
 
