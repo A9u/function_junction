@@ -15,11 +15,11 @@ import (
 )
 
 type Service interface {
-	list(ctx context.Context, teamID primitive.ObjectID) (response listResponse, err error)
-	create(ctx context.Context, req createRequest, teamID primitive.ObjectID) (msg string, err error)
+	list(ctx context.Context, teamID  primitive.ObjectID) (response listResponse, err error)
+	create(ctx context.Context, req createRequest, teamID primitive.ObjectID) (response createResponse, err error)
 	findByID(ctx context.Context, teamMemberID primitive.ObjectID) (response findByIDResponse, err error)
 	deleteByID(ctx context.Context, teamMemberID primitive.ObjectID) (err error)
-	update(ctx context.Context, req updateRequest, teamMemberID primitive.ObjectID) (err error)
+	update(ctx context.Context, req updateRequest, teamMemberID primitive.ObjectID, teamID primitive.ObjectID, eventID primitive.ObjectID) (response updateResponse, err error)
 }
 
 type teamMemberService struct {
@@ -28,6 +28,7 @@ type teamMemberService struct {
 	collection     *mongo.Collection
 	teamCollection *mongo.Collection
 	userCollection *mongo.Collection
+	eventCollection *mongo.Collection
 }
 
 func (tms *teamMemberService) list(ctx context.Context, teamID primitive.ObjectID) (response listResponse, err error) {
@@ -40,12 +41,12 @@ func (tms *teamMemberService) list(ctx context.Context, teamID primitive.ObjectI
 		tms.logger.Error("Error listing team members", "err", err.Error())
 		return
 	}
-
+	fmt.Println("team_members", teamMembers)
 	response.TeamMembers = teamMembers
 	return
 }
 
-func (tms *teamMemberService) create(ctx context.Context, tm createRequest, teamID primitive.ObjectID) (msg string, err error) {
+func (tms *teamMemberService) create(ctx context.Context, tm createRequest, teamID primitive.ObjectID) (response createResponse, err error) {
 	err = tm.Validate()
 	if err != nil {
 		tms.logger.Errorw("Invalid request for team member create", "msg", err.Error(), "team member", tm)
@@ -53,6 +54,7 @@ func (tms *teamMemberService) create(ctx context.Context, tm createRequest, team
 	}
 
 	team, err := tms.store.FindTeamByID(ctx, teamID, tms.teamCollection)
+	fmt.Println("team", team)
 	if err != nil {
 		tms.logger.Errorw("Invalid request for team member create", "msg", err.Error(), "team member", tm)
 		return
@@ -70,14 +72,15 @@ func (tms *teamMemberService) create(ctx context.Context, tm createRequest, team
 			_, err := tms.store.FindTeamMemberByInviteeIDEventID(ctx, user.ID, team.EventID, tms.collection)
 
 			if err != nil {
-				err = tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
+				teamMember, err := tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
 					InviteeID: user.ID,
 					Status:    "Invited",
 					InviterID: currentUser.ID,
 					TeamID:    teamID,
 					EventID:   team.EventID,
 				})
-
+			response.TeamMember = teamMember
+				
 				if err == nil {
 					fmt.Println(user.Email)
 					userEmails += user.Email + ","
@@ -90,7 +93,7 @@ func (tms *teamMemberService) create(ctx context.Context, tm createRequest, team
 
 		}
 	}
-
+	var msg = ""
 	if len(userEmails) > 0 {
 		userEmails = strings.TrimRight(userEmails, ",")
 		invitees := strings.Split(userEmails, ",")
@@ -102,23 +105,65 @@ func (tms *teamMemberService) create(ctx context.Context, tm createRequest, team
 		msg += "Invitations not sent for " + userErrEmails
 		//tms.logger.Errorw("Error creating team member for " + userErrEmails + "err")
 	}
-
-	return msg, nil
+	response.Message = msg
+	return 
 }
 
-func (tms *teamMemberService) update(ctx context.Context, tm updateRequest, id primitive.ObjectID) (err error) {
+func (tms *teamMemberService) update(ctx context.Context, tm updateRequest, id primitive.ObjectID, teamID primitive.ObjectID, eventID primitive.ObjectID) (response updateResponse, err error) {
 	err = tm.Validate()
 	if err != nil {
 		tms.logger.Error("Invalid Request for team member update", "err", err.Error(), "team member", tm)
 		return
 	}
+	// currentUser := ctx.Value("currentUser").(db.User)
+	
+	user, err := db.FindUserByID(ctx, tm.InviterID)
+	fmt.Println("User", user)
+	if err != nil{
+		tms.logger.Error("Inviter Does not Exist in Db")
+		err = errInviterDoesNotExist
+		return
+	}
+	Event, err := tms.store.FindEventByID(ctx , eventID, tms.eventCollection)
+	if err!= nil {
+		tms.logger.Error("Event Does not Exist in Db")
+		err = errEventDoesNotExist
+		return
+	}
+	fmt.Println("event", Event.ID)
 
-	err = tms.store.UpdateTeamMember(ctx, id, tms.collection, &db.TeamMember{Name: tm.Name, Status: tm.Status, InviterID: tm.InviterID, TeamID: tm.TeamID, EventID: tm.EventID})
+	Team,  err := tms.store.FindTeamByID(ctx, teamID, tms.teamCollection)
+	if err!= nil {
+		tms.logger.Error("Team Does not Exist in Db")
+		err = errTeamDoesNotExist
+		return
+	}
+	fmt.Println("event", Team.ID)
+
+	if err != nil{
+		tms.logger.Error("Team Not Present", err.Error())
+		err = errTeamDoesNotExist
+		return
+	}
+	if tm.Status == "accept"{
+		result, _ :=   tms.store.IsTeamComplete(ctx, tms.collection, tm.TeamID, tm.EventID)
+		if result ==  true {
+			tms.logger.Error("Team is Already Complete")
+			return 
+		}
+	}
+	teamMember, err := tms.store.UpdateTeamMember(ctx, id, tms.collection, &db.TeamMember{ Status: tm.Status, InviterID: user.ID, TeamID: tm.TeamID, EventID: tm.EventID})
 	if err != nil {
 		tms.logger.Error("Error updating team member", "err", err.Error(), "team member", tm)
 		return
 	}
-
+	// notifyTeamMembers(invitees, team, currentUser, team.EventID)
+	// subject := currentUser.Email + " has " + tm.Status + " your Invite"
+	// body := "Click on Link to see Event and Team details"
+	// mailer.SendEmailTo("priyanka216668@gmail.com", user.Email, subject, body)
+	//mailer.NotifyAll()
+	
+	response.TeamMember = teamMember
 	return
 }
 
@@ -143,19 +188,20 @@ func (tms *teamMemberService) deleteByID(ctx context.Context, id primitive.Objec
 	return
 }
 
-func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection, t *mongo.Collection, u *mongo.Collection) Service {
+func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection, t *mongo.Collection, u *mongo.Collection, e *mongo.Collection) Service {
 	return &teamMemberService{
 		store:          s,
 		logger:         l,
 		collection:     c,
 		teamCollection: t,
 		userCollection: u,
+		eventCollection: e,
 	}
 }
 
 func notifyTeamMembers(invitees []string, team *db.Team, currentUser db.User, eventID primitive.ObjectID) {
 	mail := mailer.Email{}
-	mail.From = currentUser.Email
+	mail.From = "priyanka@joshsoftware.com"//currentUser.Email
 	mail.To = invitees
 	fmt.Println(mail.To)
 	mail.Subject = "Invitation to join " + team.Name

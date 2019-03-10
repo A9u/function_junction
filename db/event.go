@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"time"
-
+	"github.com/A9u/function_junction/app"
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
@@ -76,6 +76,13 @@ func (s *store) FindEventByID(ctx context.Context, eventID primitive.ObjectID, c
 	err = collection.FindOne(ctx, bson.D{{"_id", eventID}}).Decode(&event)
 	event_info := EventInfo{Event: event}
 	return &event_info, err
+}
+
+func (s *store) FindEventByName(ctx context.Context, eventName string) (eventID primitive.ObjectID , err error) {
+	collection := app.GetCollection("events")
+	var event Event
+	err = collection.FindOne(ctx, bson.D{{"title", eventName}}).Decode(&event)
+	return event.ID, err
 }
 
 func (s *store) DeleteEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (err error) {

@@ -1,7 +1,10 @@
 package team_member
 
-import "github.com/A9u/function_junction/db"
-import "github.com/mongodb/mongo-go-driver/bson/primitive"
+import (
+	// "regexp"
+	"github.com/A9u/function_junction/db"
+	"github.com/mongodb/mongo-go-driver/bson/primitive"
+)
 
 type updateRequest struct {
 	Name      string             `json:"name"`
@@ -16,12 +19,23 @@ type createRequest struct {
 	TeamID primitive.ObjectID `json:"team_id"`
 }
 
+
+
 type findByIDResponse struct {
 	TeamMember db.TeamMember `json:"team_member"`
 }
 
 type listResponse struct {
-	TeamMembers []*db.TeamMember `json:"team_members"`
+	TeamMembers []*db.TeamMemberInfo `json:"team_members"`
+}
+
+type createResponse struct {
+	TeamMember db.TeamMember `json:"team_member"`
+	Message   string       `json:"message"`
+}
+
+type updateResponse struct {
+	TeamMember db.TeamMember `json:"team_member"`
 }
 
 func (cr createRequest) Validate() (err error) {
@@ -35,5 +49,9 @@ func (ur updateRequest) Validate() (err error) {
 	if ur.Name == "" {
 		return errEmptyName
 	}
+	
+	// re := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@joshsoftware.com$")
+
+	
 	return
 }
