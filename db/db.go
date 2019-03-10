@@ -28,7 +28,7 @@ type Storer interface {
 	FindTeamByID(ctx context.Context, teamID primitive.ObjectID, collection *mongo.Collection) (team *Team, err error)
 	// Events
 	CreateEvent(ctx context.Context, collection *mongo.Collection, event *Event) (created_event *Event, err error)
-	ListEvents(ctx context.Context, collection *mongo.Collection) (events []*Event, err error)
+	ListEvents(ctx context.Context, collection *mongo.Collection) (events []*EventInfo, err error)
 	FindEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (event Event, err error)
 	DeleteEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (err error)
 	UpdateEvent(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection, event *Event) (updated_event *Event, err error)
