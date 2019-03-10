@@ -14,6 +14,7 @@ type config struct {
 	db         databaseConfig
 	smtpApiKey string
 	url        string
+	allEmail   string
 }
 
 var appConfig config
@@ -37,6 +38,7 @@ func Load() {
 		smtpApiKey: readEnvString("SMTP_API_KEY"),
 		db:         newDatabaseConfig(),
 		url:        readEnvString("URL"),
+		allEmail:   readEnvString("ALL_EMAIL"),
 	}
 }
 
@@ -75,4 +77,8 @@ func SmtpApiKey() string {
 
 func URL() string {
 	return appConfig.url
+}
+
+func AllEmail() string {
+	return appConfig.allEmail
 }

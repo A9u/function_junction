@@ -11,7 +11,7 @@ import (
 )
 
 type Service interface {
-	list(ctx context.Context) (response listResponse, err error)
+	list(ctx context.Context, eventID primitive.ObjectID) (response listResponse, err error)
 	create(ctx context.Context, req createRequest, eventID primitive.ObjectID) (response createResponse, err error)
 }
 
@@ -21,8 +21,8 @@ type teamService struct {
 	collection *mongo.Collection
 }
 
-func (ts *teamService) list(ctx context.Context) (response listResponse, err error) {
-	teams, err := ts.store.ListTeams(ctx, ts.collection)
+func (ts *teamService) list(ctx context.Context, eventID primitive.ObjectID) (response listResponse, err error) {
+	teams, err := ts.store.ListTeams(ctx, ts.collection, eventID)
 	if err == db.ErrTeamNotExist {
 		ts.logger.Error("No team present", "err", err.Error())
 		return response, errNoTeams
