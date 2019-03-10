@@ -61,8 +61,7 @@ func (s *store) ListEvents(ctx context.Context, collection *mongo.Collection) (e
 	for cur.Next(ctx) {
 		var elem Event
 		err = cur.Decode(&elem)
-    user, _ := FindUserByID(ctx, elem.CreatedBy)
-    creatorInfo := UserInfo{FirstName: user.FirstName, LastName: user.LastName, UserID: user.ID, Email: user.Email}
+    creatorInfo, _ := FindUserInfoByID(ctx, elem.CreatedBy)
     event := EventInfo{Event: &elem, CreatorInfo: creatorInfo, NumberOfParticipants: 5, IsAttending: true}
     eventsInfo = append(eventsInfo, &event)
 	}
