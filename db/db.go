@@ -23,8 +23,8 @@ type Storer interface {
 	DeleteCategoryByID(ctx context.Context, id string) (err error)
 	UpdateCategory(ctx context.Context, collection *mongo.Collection, filter *Category, category *Category) (err error)
 
-	CreateTeam(ctx context.Context, collection *mongo.Collection, team *Team) (createdTeam *Team, err error)
-	ListTeams(ctx context.Context, collection *mongo.Collection, eventID primitive.ObjectID) (teams []*Team, err error)
+	CreateTeam(ctx context.Context, collection *mongo.Collection, team *Team) (createdTeam *TeamInfo, err error)
+	ListTeams(ctx context.Context, collection *mongo.Collection, eventID primitive.ObjectID) (teams []*TeamInfo, err error)
 	FindTeamByID(ctx context.Context, teamID primitive.ObjectID, collection *mongo.Collection) (team *Team, err error)
 
 	// Events

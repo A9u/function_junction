@@ -21,7 +21,13 @@ type Team struct {
 	Description string             `json:"description"`
 }
 
-func (s *store) CreateTeam(ctx context.Context, collection *mongo.Collection, team *Team) (createdTeam *Team, err error) {
+type TeamInfo struct {
+  *Team
+  CreatorInfo       UserInfo `json:"created_by"`
+
+}
+
+func (s *store) CreateTeam(ctx context.Context, collection *mongo.Collection, team *Team) (createdTeam *TeamInfo, err error) {
 	now := time.Now()
 	team.CreatedAt = now
 	team.UpdatedAt = now
@@ -32,15 +38,15 @@ func (s *store) CreateTeam(ctx context.Context, collection *mongo.Collection, te
 	}
 	id := res.InsertedID
 	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&team)
-	return team, err
+  creatorInfo, _ := FindUserInfoByID(ctx, team.CreatorID)
+  teamInfo := TeamInfo{Team: team, CreatorInfo: creatorInfo}
+	return &teamInfo, err
 }
 
-func (s *store) ListTeams(ctx context.Context, collection *mongo.Collection, eventID primitive.ObjectID) (teams []*Team, err error) {
+func (s *store) ListTeams(ctx context.Context, collection *mongo.Collection, eventID primitive.ObjectID) (teamsInfo []*TeamInfo, err error) {
 	// findOptions := options.Find()
 	fmt.Println(collection)
 	cur, err := collection.Find(ctx, bson.D{{"eventid", eventID}})
-	fmt.Println(cur)
-	fmt.Println(err)
 	if err != nil {
 		fmt.Println("Error in find: ", err)
 		return
@@ -49,11 +55,13 @@ func (s *store) ListTeams(ctx context.Context, collection *mongo.Collection, eve
 	for cur.Next(ctx) {
 		var elem Team
 		err = cur.Decode(&elem)
-		teams = append(teams, &elem)
+    creatorInfo, _ := FindUserInfoByID(ctx, elem.CreatorID)
+    teamInfo := TeamInfo{Team: &elem, CreatorInfo: creatorInfo}
+		teamsInfo = append(teamsInfo, &teamInfo)
 	}
 	if err := cur.Err(); err != nil {
 	}
-	return teams, err
+	return teamsInfo, err
 }
 
 func (s *store) FindTeamByID(ctx context.Context, teamID primitive.ObjectID, collection *mongo.Collection) (team *Team, err error) {

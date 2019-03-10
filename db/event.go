@@ -28,15 +28,9 @@ type Event struct {
 	RegisterBefore    time.Time     		`json:"register_before"`
 }
 
-type CreatorInfo struct {
-	UserID 			primitive.ObjectID	`json:"user_id"`
-	FirstName 	string 				`json:"first_name"`
-	LastName 	string 				`json:"last_name"`
-}
-
 type EventInfo struct {
   *Event
-  CreatorInfo 			CreatorInfo `json:"created_by"`
+  CreatorInfo 			UserInfo `json:"created_by"`
   NumberOfParticipants	int 		`json:"number_of_participants"`
   IsAttending			bool		`json:"is_attending"`
 }
@@ -52,7 +46,7 @@ func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, e
 	id := res.InsertedID
 	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&event)
     user, _ := FindUserByID(ctx, event.CreatedBy)
-    creatorInfo := CreatorInfo{FirstName: user.FirstName, LastName: user.LastName, UserID: user.ID}
+    creatorInfo := UserInfo{FirstName: user.FirstName, LastName: user.LastName, UserID: user.ID, Email: user.Email}
 	event_info := EventInfo{Event: event, CreatorInfo: creatorInfo, NumberOfParticipants: 5, IsAttending: true}
 	return &event_info, err
 }
@@ -67,7 +61,6 @@ func (s *store) ListEvents(ctx context.Context, collection *mongo.Collection) (e
 	for cur.Next(ctx) {
 		var elem Event
 		err = cur.Decode(&elem)
-	    user, _ := FindUserByID(ctx, elem.CreatedBy)
 	    participants := 0
 	    if elem.IsIndividualEvent{
 	    	participants = s.NumberOfIndividualsAttendingEvent(ctx, elem.ID)
@@ -76,7 +69,7 @@ func (s *store) ListEvents(ctx context.Context, collection *mongo.Collection) (e
 	    	participants = len(teams)
 	    }
     	attending := s.IsAttendingEvent(ctx, elem.ID)
-    	creatorInfo := CreatorInfo{FirstName: user.FirstName, LastName: user.LastName, UserID: user.ID}
+	    creatorInfo, _ := FindUserInfoByID(ctx, elem.CreatedBy)
     	event := EventInfo{Event: &elem, CreatorInfo: creatorInfo, NumberOfParticipants: participants, IsAttending: attending}
     	eventsInfo = append(eventsInfo, &event)
 	}
@@ -89,7 +82,7 @@ func (s *store) FindEventByID(ctx context.Context, eventID primitive.ObjectID, c
 	var event *Event
 	err = collection.FindOne(ctx, bson.D{{"_id", eventID}}).Decode(&event)
     user, _ := FindUserByID(ctx, event.CreatedBy)
-    creatorInfo := CreatorInfo{FirstName: user.FirstName, LastName: user.LastName, UserID: user.ID}
+    creatorInfo := UserInfo{FirstName: user.FirstName, LastName: user.LastName, UserID: user.ID, Email: user.Email}
 	event_info := EventInfo{Event: event, CreatorInfo: creatorInfo, NumberOfParticipants: 5, IsAttending: true}
 	return &event_info, err
 }
@@ -122,7 +115,7 @@ func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, collecti
 				{ "updated_at", time.Now() }, }, },})
 	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&event)
     user, _ := FindUserByID(ctx, event.CreatedBy)
-    creatorInfo := CreatorInfo{FirstName: user.FirstName, LastName: user.LastName, UserID: user.ID}
+    creatorInfo := UserInfo{FirstName: user.FirstName, LastName: user.LastName, UserID: user.ID}
 	event_info := EventInfo{Event: event, CreatorInfo: creatorInfo, NumberOfParticipants: 5, IsAttending: true}
 	return &event_info, err
 }
