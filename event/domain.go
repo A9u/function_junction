@@ -38,25 +38,49 @@ type createRequest struct {
 	RegisterBefore    time.Time     `json:"register_before"`
 }
 
-type findByIDResponse struct {
-	Event db.Event `json:"event"`
-}
 
 type listResponse struct {
 	Events []*db.EventInfo `json:"events"`
 }
 
-func (cr createRequest) Validate() (err error) {
+type eventResponse struct {
+	Event *db.EventInfo `json:"event"`
+}
+
+func (cr createRequest) CreateValidate() (err error) {
 	if cr.Title == "" {
 		return errEmptyTitle
+	}
+
+	if cr.EndDateTime.IsZero() || cr.StartDateTime.IsZero() {
+		return errEmptyDate
+	}
+
+	if cr.IsIndividualEvent == false && (cr.MaxSize == 0 || cr.MinSize == 0){
+		return errEmptyTeamSize
+	}
+
+	if cr.IsIndividualEvent == false && (cr.MinSize > cr.MaxSize){
+		return errEmptyTeamSize
 	}
 	return
 }
 
-type createResponse struct {
-	Event *db.Event `json:"event"`
-}
+func (cr updateRequest) UpdateValidate() (err error) {
+	if cr.Title == "" {
+		return errEmptyTitle
+	}
 
-type updateResponse struct {
-	Event *db.Event `json:"event"`
+	if cr.EndDateTime.IsZero() || cr.StartDateTime.IsZero() {
+		return errEmptyDate
+	}
+
+	if cr.IsIndividualEvent == false && (cr.MaxSize == 0 || cr.MinSize == 0){
+		return errEmptyTeamSize
+	}
+
+	if cr.IsIndividualEvent == false && (cr.MinSize > cr.MaxSize){
+		return errInvalidTeamSize
+	}
+	return
 }
