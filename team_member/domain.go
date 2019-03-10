@@ -15,8 +15,7 @@ type updateRequest struct {
 }
 
 type createRequest struct {
-	Emails []string
-	TeamID primitive.ObjectID `json:"team_id"`
+	Emails []string `json:emails`
 }
 
 
