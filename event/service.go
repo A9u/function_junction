@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/A9u/function_junction/db"
+	// "github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"go.uber.org/zap"
@@ -12,10 +13,10 @@ import (
 
 type Service interface {
 	list(ctx context.Context) (response listResponse, err error)
-	create(ctx context.Context, req createRequest) (response createResponse, err error)
-	findByID(ctx context.Context, eventID primitive.ObjectID) (response findByIDResponse, err error)
+	create(ctx context.Context, req createRequest) (response EventResponse, err error)
+	findByID(ctx context.Context, eventID primitive.ObjectID) (response FindEventResponse, err error)
 	deleteByID(ctx context.Context, eventID primitive.ObjectID) (err error)
-	update(ctx context.Context, req updateRequest, eventID primitive.ObjectID) (response updateResponse, err error)
+	update(ctx context.Context, req updateRequest, eventID primitive.ObjectID) (response EventResponse, err error)
 }
 
 type eventService struct {
@@ -39,7 +40,7 @@ func (es *eventService) list(ctx context.Context) (response listResponse, err er
 	return
 }
 
-func (es *eventService) create(ctx context.Context, c createRequest) (response createResponse, err error) {
+func (es *eventService) create(ctx context.Context, c createRequest) (response EventResponse, err error) {
 	err = c.CreateValidate()
 	if err != nil {
 		es.logger.Error("Invalid request for event create", "msg", err.Error(), "event", c)
@@ -65,34 +66,52 @@ func (es *eventService) create(ctx context.Context, c createRequest) (response c
 		es.logger.Error("Error creating event", "err", err.Error())
 		return
 	}
-	response.Event = event
+	response = eventToResponse(event)
 	return
 }
 
-func (es *eventService) findByID(ctx context.Context, id primitive.ObjectID) (response findByIDResponse, err error) {
+func (es *eventService) findByID(ctx context.Context, id primitive.ObjectID) (response FindEventResponse, err error) {
 	event, err := es.store.FindEventByID(ctx, id, es.collection)
 	if err != nil {
 		es.logger.Error("Error finding Event - ", "err", err.Error(), "event_id", id)
 		return
 	}
 	response.Event = event
+	response.NumberOfParticipants = 5
 	return
 }
 
-func (es *eventService) update(ctx context.Context, eu updateRequest, id primitive.ObjectID) (response updateResponse, err error) {
+func (es *eventService) update(ctx context.Context, eu updateRequest, id primitive.ObjectID) (response EventResponse, err error) {
+	// err = es.store.AuthorizedToUpdateEvent(ctx, id, es.collection)
+	// if err != nil{
+	// 	es.logger.Error("Authorization Error", "msg", err.Error(), "event", eu)
+	// 	return
+	// }
+
 	err = eu.UpdateValidate()
 	if err != nil {
-		es.logger.Error("Invalid request for event create", "msg", err.Error(), "event", eu)
+		es.logger.Error("Invalid request for event update", "msg", err.Error(), "event", eu)
 		return
 	}
+	event, err := es.store.UpdateEvent(ctx, id, es.collection, &db.Event{
+		Title: eu.Title,
+		Description: eu.Description,
+		Venue: eu.Venue,
+		IsPublished: eu.IsPublished,
+		MinSize: eu.MinSize,
+		MaxSize: eu.MaxSize,
+		StartDateTime: eu.StartDateTime,
+		EndDateTime: eu.EndDateTime,
+		IsIndividualEvent: eu.IsIndividualEvent,
+		RegisterBefore: eu.RegisterBefore,
+		IsShowcasable: eu.IsShowcasable,
+	})
 
-	event, err := es.store.UpdateEvent(ctx, id, es.collection, &db.Event{Title: eu.Title, Description: eu.Description,
-		Venue: eu.Venue, IsPublished: eu.IsPublished})
 	if err != nil {
 		es.logger.Error("Error updating event", "err", err.Error(), "event", eu)
 		return
 	}
-	response.Event = event
+	response = eventToResponse(event)
 	return
 }
 
@@ -112,4 +131,10 @@ func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection) Service 
 		logger:     l,
 		collection: c,
 	}
+}
+
+func eventToResponse(event *db.Event) (response EventResponse){
+	response.Event = event
+	response.NumberOfParticipants = 5
+	return
 }

@@ -14,4 +14,5 @@ var (
 	errInvalidLastDate 		= errors.New("Event End Date and Time must be present")
 	errEmptyTeamSize				= errors.New("Minimum and maximum team size are compulsory for team events")
 	errInvalidTeamSize				= errors.New("Minimum Team size should be greater than Minimum tesm size")
+	// errNotAuthorizedToUpdate		= errors.New("You are not Authorized to Update this event.")
 )

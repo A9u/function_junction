@@ -30,6 +30,10 @@ type Event struct {
 
 func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, event *Event) (created_event *Event, err error) {
 	event.CreatedAt = time.Now()
+	if event.IsIndividualEvent == true{
+		event.MinSize = 0
+		event.MaxSize = 0
+	}
 	res, err := collection.InsertOne(ctx, event)
 	//if err != nil { return res,err }
 
@@ -66,21 +70,33 @@ func (s *store) DeleteEventByID(ctx context.Context, eventID primitive.ObjectID,
 }
 
 func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, collection *mongo.Collection, event *Event) (updated_event *Event, err error) {
-	event.UpdatedAt = time.Now()
 	_, err = collection.UpdateOne(ctx, bson.D{{"_id", id}}, bson.D{{"$set",
 		bson.D{ { "title", event.Title },
 				{ "description", event.Description },
-				{ "is_published", event.IsPublished },
+				{ "ispublished", event.IsPublished },
 				{ "venue", event.Venue },
-				{ "start_date_time", event.StartDateTime },
-				{ "end_date_time", event.EndDateTime },
-				{ "is_showcasable", event.IsShowcasable },
-				{ "is_individual_participation", event.IsIndividualEvent },
-				{ "max_size", event.MaxSize },
-				{ "min_size", event.MinSize },
-				{ "register_before", event.RegisterBefore },
-				{ "updated_at", time.Now() }, }, },})
+				{ "startdatetime", event.StartDateTime },
+				{ "enddatetime", event.EndDateTime },
+				{ "isshowcasable", event.IsShowcasable },
+				{ "isindividualevent", event.IsIndividualEvent },
+				{ "maxsize", event.MaxSize },
+				{ "minsize", event.MinSize },
+				{ "registerbefore", event.RegisterBefore },
+				{ "updatedat", time.Now() }, }, },})
 
 	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&event)
 	return event, err
 }
+
+// func (s *store) GetParticipantCountForEvent(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (number int, err error) {
+	
+// }
+
+// func (s *store) AuthorizedToUpdateEvent(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (err error) {
+// 	event, err := s.FindEventByID(ctx, eventID, collection)
+// 	if (event.CreatedBy != ctx.Value("currentUser").(db.User).ID){
+// 		return errNotAuthorizedToUpdate
+// 	}
+
+// }
+

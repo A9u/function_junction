@@ -40,10 +40,6 @@ type createRequest struct {
 	RegisterBefore    time.Time     `json:"register_before"`
 }
 
-type findByIDResponse struct {
-	Event db.Event `json:"event"`
-}
-
 type listResponse struct {
 	Events []*db.Event `json:"events"`
 }
@@ -81,23 +77,17 @@ func (cr updateRequest) UpdateValidate() (err error) {
 	}
 
 	if cr.IsIndividualEvent == false && (cr.MinSize > cr.MaxSize){
-		return errEmptyTeamSize
+		return errInvalidTeamSize
 	}
 	return
 }
 
-// func (cr createRequest) ValidateDataTypes() (err error) {
-// 	fmt.Println(cr.IsIndividualEvent)
-// 	if !(cr.IsIndividualEvent == true || cr.IsIndividualEvent == false) {
-// 		return errEmptyIndividualEvent
-// 	}
-// 	return
-// }
-
-type createResponse struct {
-	Event *db.Event `json:"event"`
+type EventResponse struct {
+	Event 					*db.Event   `json:"event"`
+	NumberOfParticipants	int 		`json:"number_of_participants"`
 }
 
-type updateResponse struct {
-	Event *db.Event `json:"event"`
+type FindEventResponse struct {
+	Event 					db.Event    `json:"event"`
+	NumberOfParticipants	int 		`json:"number_of_participants"`
 }
