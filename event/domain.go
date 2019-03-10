@@ -43,7 +43,7 @@ type findByIDResponse struct {
 }
 
 type listResponse struct {
-	Events []*db.Event `json:"events"`
+	Events []*db.EventInfo `json:"events"`
 }
 
 func (cr createRequest) Validate() (err error) {
