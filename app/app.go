@@ -46,14 +46,11 @@ func initDB() (err error) {
 		return
 	}
 	db = client.Database(dbConfig.DbName())
-	// db, err = sqlx.Open(dbConfig.Driver(), dbConfig.ConnectionURL())
-
-	if err = client.Ping(ctx, nil); err != nil {
-		return
-	}
-	// db.SetMaxIdleConns(dbConfig.MaxPoolSize())
-	// db.SetMaxOpenConns(dbConfig.MaxOpenConns())
-	// db.SetConnMaxLifetime(time.Duration(dbConfig.MaxLifeTimeMins()) * time.Minute)
+	/*
+		if err = client.Ping(ctx, nil); err != nil {
+			return
+		}
+	*/
 
 	return
 }

@@ -55,3 +55,13 @@ func (s *store) ListTeams(ctx context.Context, collection *mongo.Collection) (te
 	}
 	return teams, err
 }
+
+func (s *store) FindTeamByID(ctx context.Context, teamID primitive.ObjectID, collection *mongo.Collection) (team *Team, err error) {
+	err = collection.FindOne(ctx, bson.D{{"_id", teamID}}).Decode(&team)
+
+	if err != nil {
+		fmt.Println("Error in FindTeamByID: ", err)
+		return
+	}
+	return team, err
+}
