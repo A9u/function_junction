@@ -11,7 +11,7 @@ import (
 )
 
 type Event struct {
-	Id                primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	Id                primitive.ObjectID `bson:"_id,omitempty"`
 	Title             string             `json:"title"`
 	Description       string             `json:"description"`
 	StartDateTime     time.Time          `json:"startDateTime"`
@@ -28,6 +28,12 @@ type Event struct {
 	RegisterBefore    time.Time          `db:"registerBefore"`
 }
 
+type EventInfo struct {
+  Event
+  UserFirstName         string
+  UserLastName          string
+}
+
 func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, event *Event) (created_event *Event, err error) {
 	event.CreatedAt = time.Now()
 	res, err := collection.InsertOne(ctx, event)
@@ -37,7 +43,7 @@ func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, e
 	return event, err
 }
 
-func (s *store) ListEvents(ctx context.Context, collection *mongo.Collection) (events []*Event, err error) {
+func (s *store) ListEvents(ctx context.Context, collection *mongo.Collection) (eventsInfo []*EventInfo, err error) {
 	cur, err := collection.Find(ctx, bson.D{})
 	if err != nil {
 		fmt.Println("Error in find: ", err)
@@ -47,11 +53,15 @@ func (s *store) ListEvents(ctx context.Context, collection *mongo.Collection) (e
 	for cur.Next(ctx) {
 		var elem Event
 		err = cur.Decode(&elem)
-		events = append(events, &elem)
+    user, _ := FindUserByID(ctx, elem.CreatedBy)
+    fmt.Println(user)
+    event := EventInfo{Event: elem, UserFirstName: user.FirstName, UserLastName: user.LastName}
+    eventsInfo = append(eventsInfo, &event)
 	}
 	if err := cur.Err(); err != nil {
 	}
-	return events, err
+
+	return eventsInfo, err
 }
 
 func (s *store) FindEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (event Event, err error) {
