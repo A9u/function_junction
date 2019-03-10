@@ -25,7 +25,7 @@ func initDependencies() (dependencies, error) {
 	teamService := team.NewService(dbStore, logger, app.GetCollection("teams"))
 	eventService := event.NewService(dbStore, logger, app.GetCollection("events"))
 	teamMemberService := team_member.NewService(dbStore, logger, app.GetCollection("team_members"),
-		app.GetCollection("teams"), app.GetCollection("users"))
+		app.GetCollection("teams"), app.GetCollection("users"), app.GetCollection("events"))
 
 	return dependencies{
 		CategoryService:   categoryService,

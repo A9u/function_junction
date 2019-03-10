@@ -3,14 +3,15 @@ package db
 import (
 	"context"
 	"fmt"
+	"github.com/A9u/function_junction/app"
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"time"
 )
 
-type TeamMember struct {
-	Name      string             `json:"name"`
+type TeamMember struct { 
+	ID       primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	Status    string             `json:"status"`
 	InviteeID primitive.ObjectID `json:"invitee_id"`
 	InviterID primitive.ObjectID `json:"inviter_id"`
@@ -20,20 +21,30 @@ type TeamMember struct {
 	UpdatedAt time.Time          `json:"updated_at"`
 }
 
-func (s *store) CreateTeamMember(ctx context.Context, collection *mongo.Collection, teamMember *TeamMember) (err error) {
+type TeamMemberInfo struct{
+	TeamMember
+	InviteeName string `json:"invitee_name"`
+	InviterName string `json:"inviter_name"`
+}
+func (s *store) CreateTeamMember(ctx context.Context, collection *mongo.Collection, teamMember *TeamMember) (createdTeamMember TeamMember, err error) {
+	fmt.Println("teamMemner" ,teamMember)
 	teamMember.CreatedAt = time.Now()
 	fmt.Println("teamMember", teamMember)
 
-	_, err = collection.InsertOne(ctx, teamMember)
+	res, err := collection.InsertOne(ctx, teamMember)
 	if err != nil {
 		fmt.Println("Error in CreateTeamMember: ", err)
 		return
 	}
-	return err
+	id :=  res.InsertedID
+	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&teamMember)
+	return *teamMember, err
 }
 
-func (s *store) ListTeamMember(ctx context.Context, teamID primitive.ObjectID, collection *mongo.Collection) (teamMembers []*TeamMember, err error) {
-	cur, err := collection.Find(ctx, bson.D{{"teamid", teamID}})
+func (s *store) ListTeamMember(ctx context.Context, teamID primitive.ObjectID, collection *mongo.Collection) (teamMembers []*TeamMemberInfo, err error) {
+	
+
+	cur, err := collection.Find(ctx, bson.D{})
 	if err != nil {
 		fmt.Println("Error in find: ", err)
 		return
@@ -42,7 +53,9 @@ func (s *store) ListTeamMember(ctx context.Context, teamID primitive.ObjectID, c
 	for cur.Next(ctx) {
 		var elem TeamMember
 		err = cur.Decode(&elem)
-		teamMembers = append(teamMembers, &elem)
+		teamMemberInfo := TeamMemberInfo{ TeamMember: elem, InviteeName: "test", InviterName: "inviter" }
+		fmt.Println("info", teamMemberInfo)
+		teamMembers = append(teamMembers, &teamMemberInfo)
 	}
 	if err = cur.Err(); err != nil {
 		fmt.Println("Error in currsor: ", err)
@@ -61,6 +74,33 @@ func (s *store) FindTeamMemberByID(ctx context.Context, teamMemberID primitive.O
 	return teamMember, err
 }
 
+func (s *store) FindTeamId(ctx context.Context, collection *mongo.Collection, inviterId  primitive.ObjectID, eventID primitive.ObjectID) (teamId  primitive.ObjectID, err error) {
+	var teamMember TeamMember 
+	err = collection.FindOne(ctx, bson.D{{"inviterid", inviterId}, {"eventid", eventID}}).Decode(&teamMember)
+
+	if err != nil {
+		fmt.Println("Error in FindTeamMemberByID: ", err)
+		return
+	}
+	return teamMember.TeamID, err
+}
+
+func (s *store) IsTeamComplete(ctx context.Context, collection *mongo.Collection, teamID primitive.ObjectID, eventID primitive.ObjectID)( result bool, err error){
+	count, err := collection.Count(ctx, bson.D{{"status", "accept"}, {"teamid", teamID}, {"eventid", eventID}})
+	if err == nil {
+		event, err := s.FindEventByID(ctx, eventID, app.GetCollection("events"))
+		if err == nil {
+			if (int64(event.MaxSize) == count){
+			return  true, nil
+			}
+		}
+	}
+	if err != nil {
+		return false, err
+	}
+	return false, nil
+}
+
 func (s *store) DeleteTeamMemberByID(ctx context.Context, teamMemberID primitive.ObjectID, collection *mongo.Collection) (err error) {
 	_, err = collection.DeleteOne(ctx, bson.D{{"_id", teamMemberID}})
 	if err != nil {
@@ -70,10 +110,9 @@ func (s *store) DeleteTeamMemberByID(ctx context.Context, teamMemberID primitive
 	return err
 }
 
-func (s *store) UpdateTeamMember(ctx context.Context, id primitive.ObjectID, collection *mongo.Collection, teamMember *TeamMember) (err error) {
+func (s *store) UpdateTeamMember(ctx context.Context, id primitive.ObjectID, collection *mongo.Collection, teamMember *TeamMember) (updateTeamMember TeamMember, err error) {
 
 	_, err = collection.UpdateOne(ctx, bson.D{{"_id", id}}, bson.D{{"$set", bson.D{
-		{"name", teamMember.Name},
 		{"status", teamMember.Status},
 		{"team_id", teamMember.TeamID},
 		{"inviter_id", teamMember.InviterID},
@@ -85,7 +124,13 @@ func (s *store) UpdateTeamMember(ctx context.Context, id primitive.ObjectID, col
 		fmt.Println("Error During UpdateTeamMember: ", err)
 		return
 	}
-	return err
+	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&teamMember)
+
+	if err != nil {
+		fmt.Println("Error During UpdateTeamMember: ", err)
+		return
+	}
+	return *teamMember, err
 }
 
 func (s *store) FindTeamMemberByInviteeIDEventID(ctx context.Context, inviteeID primitive.ObjectID, eventID primitive.ObjectID, collection *mongo.Collection) (teamMember *TeamMember, err error) {
