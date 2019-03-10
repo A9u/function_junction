@@ -134,7 +134,7 @@ func notifyAll(event *db.Event, currentUser db.User) {
 	mail.Body = "A new event <b>" + event.Title + "</b> has been added. " +
 		"<p> It is at " + event.Venue + " from " + event.StartDateTime.Format(time.ANSIC) + " to " +
 		event.EndDateTime.Format(time.ANSIC) + ". </p>" +
-		"<p> Please check the details <a href=" + config.URL() + "events/" + event.Id.String() + " > here </a> <p>"
+		"<p> Please check the details <a href=" + config.URL() + "events/" + getEventIDString(event.ID) + " > here </a> <p>"
 
 	mail.Send()
 }
@@ -157,7 +157,11 @@ func notifyChange(event *db.Event, currentUser db.User) {
 	mail.Body = "The event - <b>" + event.Title + "</b> has been updated." +
 		"<p> It is now at " + event.Venue + " from " + event.StartDateTime.Format(time.ANSIC) + " to " +
 		event.EndDateTime.Format(time.ANSIC) + ". </p>" +
-		"<p> Please check the details <a href=" + config.URL() + "events/" + event.Id.String() + " > here </a> <p>"
+		"<p> Please check the details <a href=" + config.URL() + "events/" + getEventIDString(event.ID) + " > here </a> <p>"
 
 	mail.Send()
+}
+
+func getEventIDString(eventID primitive.ObjectID) string {
+	return eventID.Hex()
 }

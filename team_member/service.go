@@ -155,12 +155,16 @@ func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection, t *mongo
 
 func notifyTeamMembers(invitees []string, team *db.Team, currentUser db.User, eventID primitive.ObjectID) {
 	mail := mailer.Email{}
-	mail.From = "anusha@joshsoftware.com" //currentUser.Email
+	mail.From = currentUser.Email
 	mail.To = invitees
 	fmt.Println(mail.To)
 	mail.Subject = "Invitation to join " + team.Name
 	mail.Body = "I have invited you to join my team <b>" + team.Name + "</b>." +
-		"<p> Please click <a href=" + config.URL() + "events/" + eventID.String() + " > here </a>. to see more details. <p>"
+		"<p> Please click <a href=" + config.URL() + "events/" + getStringID(eventID) + " > here </a>. to see more details. <p>"
 
 	mail.Send()
+}
+
+func getStringID(id primitive.ObjectID) string {
+	return id.Hex()
 }
