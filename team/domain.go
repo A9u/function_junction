@@ -11,7 +11,7 @@ type createRequest struct {
 }
 
 type listResponse struct {
-	Teams []*db.Team `json:"teams"`
+	Teams []*db.TeamInfo `json:"teams"`
 }
 
 func (cr createRequest) Validate() (err error) {
@@ -22,7 +22,7 @@ func (cr createRequest) Validate() (err error) {
 }
 
 type createResponse struct {
-  Team *db.Team `json:"team"`
+  Team *db.TeamInfo `json:"team"`
 }
 
 /*
