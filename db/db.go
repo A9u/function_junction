@@ -33,17 +33,20 @@ type Storer interface {
 	FindEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (event *EventInfo, err error)
 	DeleteEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (err error)
 	UpdateEvent(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection, event *Event) (updated_event *EventInfo, err error)
-
-	// TeamMember
-	CreateTeamMember(ctx context.Context, collection *mongo.Collection, teamMember *TeamMember) (err error)
-	ListTeamMember(ctx context.Context, teamID primitive.ObjectID, collection *mongo.Collection) (teamMembers []*TeamMember, err error)
+	
+  // TeamMember
+	CreateTeamMember(ctx context.Context, collection *mongo.Collection, teamMember *TeamMember) (createdTeamMember TeamMember, err error)
+	ListTeamMember(ctx context.Context, teamID primitive.ObjectID, collection *mongo.Collection) (teamMembers []*TeamMemberInfo, err error)
 	FindTeamMemberByID(ctx context.Context, teamMemberID primitive.ObjectID, collection *mongo.Collection) (teamMember TeamMember, err error)
 	DeleteTeamMemberByID(ctx context.Context, teamMemberID primitive.ObjectID, collection *mongo.Collection) (err error)
-	UpdateTeamMember(ctx context.Context, teamMemberID primitive.ObjectID, collection *mongo.Collection, teamMember *TeamMember) (err error)
+	UpdateTeamMember(ctx context.Context, teamMemberID primitive.ObjectID, collection *mongo.Collection, teamMember *TeamMember) (updatedTeamMember TeamMember, err error)
+	
 
 	FindTeamMemberByInviteeIDEventID(ctx context.Context, inviteeID primitive.ObjectID, eventID primitive.ObjectID, collection *mongo.Collection) (teamMember *TeamMember, err error)
 	// User
 	//FindUserByID(userID primitive.ObjectID) (user User, err error)
+	// FindUserByEmail(ctx context.Context, email string)(user User, err error)
+	IsTeamComplete(ctx context.Context, collection *mongo.Collection, teamID  primitive.ObjectID, eventID  primitive.ObjectID)(result bool, err error)
 }
 
 type store struct {

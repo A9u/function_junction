@@ -48,13 +48,14 @@ func (es *eventService) create(ctx context.Context, c createRequest) (response e
 		es.logger.Error("Invalid request for event create", "msg", err.Error(), "event", c)
 		return
 	}
+
 	currentUser := ctx.Value("currentUser").(db.User)
 	event_info, err := es.store.CreateEvent(ctx, es.collection, &db.Event{
-		Title: c.Title,
-		Description: c.Description,
-		StartDateTime: c.StartDateTime,
-		EndDateTime: c.EndDateTime,
-		IsShowcasable: c.IsShowcasable,
+		Title:             c.Title,
+		Description:       c.Description,
+		StartDateTime:     c.StartDateTime,
+		EndDateTime:       c.EndDateTime,
+		IsShowcasable:     c.IsShowcasable,
 		IsIndividualEvent: c.IsIndividualEvent,
 		MaxSize:           c.MaxSize,
 		MinSize:           c.MinSize,
@@ -90,11 +91,12 @@ func (es *eventService) findByID(ctx context.Context, id primitive.ObjectID) (re
 func (es *eventService) update(ctx context.Context, eu updateRequest, id primitive.ObjectID) (response eventResponse, err error) {
 	currentUser := ctx.Value("currentUser").(db.User)
 	oldEvent, err := es.store.FindEventByID(ctx, id, es.collection)
+
 	if (oldEvent.CreatedBy != currentUser.ID){
 		err = errNotAuthorizedToUpdate
 	}
 
-	if err != nil{
+	if err != nil {
 		es.logger.Error("Authorization Error", "msg", err.Error(), "event", eu)
 		return
 	}
@@ -105,17 +107,17 @@ func (es *eventService) update(ctx context.Context, eu updateRequest, id primiti
 		return
 	}
 	event_info, err := es.store.UpdateEvent(ctx, id, es.collection, &db.Event{
-		Title: eu.Title,
-		Description: eu.Description,
-		Venue: eu.Venue,
-		IsPublished: eu.IsPublished,
-		MinSize: eu.MinSize,
-		MaxSize: eu.MaxSize,
-		StartDateTime: eu.StartDateTime,
-		EndDateTime: eu.EndDateTime,
+		Title:             eu.Title,
+		Description:       eu.Description,
+		Venue:             eu.Venue,
+		IsPublished:       eu.IsPublished,
+		MinSize:           eu.MinSize,
+		MaxSize:           eu.MaxSize,
+		StartDateTime:     eu.StartDateTime,
+		EndDateTime:       eu.EndDateTime,
 		IsIndividualEvent: eu.IsIndividualEvent,
-		RegisterBefore: eu.RegisterBefore,
-		IsShowcasable: eu.IsShowcasable,
+		RegisterBefore:    eu.RegisterBefore,
+		IsShowcasable:     eu.IsShowcasable,
 	})
 
 	notifyOthers(oldEvent, event_info, currentUser)
@@ -130,6 +132,7 @@ func (es *eventService) deleteByID(ctx context.Context, id primitive.ObjectID) (
 		es.logger.Error("Error deleting Event - ", "err", err.Error(), "event_id", id)
 		return
 	}
+
 	return
 }
 

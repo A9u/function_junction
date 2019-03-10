@@ -22,7 +22,7 @@ func Create(service Service) http.HandlerFunc {
 			return
 		}
 
-		msg, err := service.create(req.Context(), c, teamID)
+		resp, err := service.create(req.Context(), c, teamID)
 		if isBadRequest(err) {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return
@@ -33,7 +33,7 @@ func Create(service Service) http.HandlerFunc {
 			return
 		}
 
-		api.Success(rw, http.StatusCreated, api.Response{Message: msg})
+		api.Success(rw, http.StatusCreated, resp)
 	})
 }
 
@@ -100,7 +100,10 @@ func DeleteByID(service Service) http.HandlerFunc {
 func Update(service Service) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
-		id, err := primitive.ObjectIDFromHex(vars["team_member_id"])
+		teamMemberID, err := primitive.ObjectIDFromHex(vars["team_member_id"])
+		teamID, err := primitive.ObjectIDFromHex(vars["team_id"])
+		eventId, err := primitive.ObjectIDFromHex(vars["event_id"])
+
 		if err != nil {
 			api.Error(rw, http.StatusInternalServerError, api.Response{Message: err.Error()})
 		}
@@ -112,7 +115,7 @@ func Update(service Service) http.HandlerFunc {
 			return
 		}
 
-		err = service.update(req.Context(), c, id)
+		resp, err := service.update(req.Context(), c , teamMemberID, teamID, eventId)
 		if isBadRequest(err) {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return
@@ -123,7 +126,7 @@ func Update(service Service) http.HandlerFunc {
 			return
 		}
 
-		api.Success(rw, http.StatusOK, api.Response{Message: "Updated Successfully"})
+		api.Success(rw, http.StatusOK, resp)
 	})
 }
 

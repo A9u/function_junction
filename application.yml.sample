@@ -13,3 +13,4 @@ DB_MAX_LIFE_TIME_MINS: 30
 MIGRATION_PATH: "./migrations"
 SMTP_API_KEY: "api key"
 URL: "url of endpoint"
+ALL_EMAIL: "email all"

@@ -33,3 +33,9 @@ func FindUserByEmail(ctx context.Context, email string, collection *mongo.Collec
 
 	return userDetails, err
 }
+
+// func (s *store) FindUserByEmail(ctx context.Context, email string) (user User, err error) {
+// 	collection := app.GetCollection("users")
+// 	err = collection.FindOne(ctx, bson.D{{"email", email}}).Decode(&user)
+// 	return user, err
+// }
