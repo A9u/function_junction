@@ -82,11 +82,16 @@ func (es *eventService) findByID(ctx context.Context, id primitive.ObjectID) (re
 }
 
 func (es *eventService) update(ctx context.Context, eu updateRequest, id primitive.ObjectID) (response EventResponse, err error) {
-	// err = es.store.AuthorizedToUpdateEvent(ctx, id, es.collection)
-	// if err != nil{
-	// 	es.logger.Error("Authorization Error", "msg", err.Error(), "event", eu)
-	// 	return
-	// }
+	c_id := ctx.Value("currentUser").(db.User).ID
+	eventHey, err := es.store.FindEventByID(ctx, id, es.collection)
+	if (eventHey.CreatedBy != c_id){
+		err = errNotAuthorizedToUpdate
+	}
+
+	if err != nil{
+		es.logger.Error("Authorization Error", "msg", err.Error(), "event", eu)
+		return
+	}
 
 	err = eu.UpdateValidate()
 	if err != nil {

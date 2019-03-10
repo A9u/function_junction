@@ -87,16 +87,3 @@ func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, collecti
 	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&event)
 	return event, err
 }
-
-// func (s *store) GetParticipantCountForEvent(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (number int, err error) {
-	
-// }
-
-// func (s *store) AuthorizedToUpdateEvent(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (err error) {
-// 	event, err := s.FindEventByID(ctx, eventID, collection)
-// 	if (event.CreatedBy != ctx.Value("currentUser").(db.User).ID){
-// 		return errNotAuthorizedToUpdate
-// 	}
-
-// }
-
