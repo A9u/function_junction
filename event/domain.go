@@ -4,7 +4,7 @@ import (
 	"github.com/A9u/function_junction/db"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"time"
-	)
+)
 
 type updateRequest struct {
 	Title             string        `json:"title"`
@@ -23,7 +23,6 @@ type updateRequest struct {
 }
 
 type createRequest struct {
-	Id                primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	Title             string        `json:"title"`
 	Description       string        `json:"description"`
 	StartDateTime     time.Time     `json:"start_date_time"`

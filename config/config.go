@@ -9,10 +9,11 @@ import (
 )
 
 type config struct {
-	appName       string
-	appPort       int
-	migrationPath string
-	db            databaseConfig
+	appName    string
+	appPort    int
+	db         databaseConfig
+	smtpApiKey string
+	url        string
 }
 
 var appConfig config
@@ -31,9 +32,11 @@ func Load() {
 	viper.AutomaticEnv()
 
 	appConfig = config{
-		appName:       readEnvString("APP_NAME"),
-		appPort:       readEnvInt("APP_PORT"),
-		db:            newDatabaseConfig(),
+		appName:    readEnvString("APP_NAME"),
+		appPort:    readEnvInt("APP_PORT"),
+		smtpApiKey: readEnvString("SMTP_API_KEY"),
+		db:         newDatabaseConfig(),
+		url:        readEnvString("URL"),
 	}
 }
 
@@ -43,10 +46,6 @@ func AppName() string {
 
 func AppPort() int {
 	return appConfig.appPort
-}
-
-func MigrationPath() string {
-	return appConfig.migrationPath
 }
 
 func readEnvInt(key string) int {
@@ -68,4 +67,12 @@ func checkIfSet(key string) {
 		err := errors.New(fmt.Sprintf("Key %s is not set", key))
 		panic(err)
 	}
+}
+
+func SmtpApiKey() string {
+	return appConfig.smtpApiKey
+}
+
+func URL() string {
+	return appConfig.url
 }

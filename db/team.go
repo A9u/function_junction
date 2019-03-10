@@ -21,16 +21,18 @@ type Team struct {
 	Description string             `json:"description"`
 }
 
-func (s *store) CreateTeam(ctx context.Context, collection *mongo.Collection, team *Team) (err error) {
+func (s *store) CreateTeam(ctx context.Context, collection *mongo.Collection, team *Team) (createdTeam *Team, err error) {
 	now := time.Now()
 	team.CreatedAt = now
 	team.UpdatedAt = now
-	_, err = collection.InsertOne(ctx, team)
+	res, err := collection.InsertOne(ctx, team)
 	if err != nil {
 		fmt.Println("Error in team creation ", err, team)
 		return
 	}
-	return err
+	id := res.InsertedID
+	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&team)
+	return team, err
 }
 
 func (s *store) ListTeams(ctx context.Context, collection *mongo.Collection) (teams []*Team, err error) {
@@ -52,4 +54,14 @@ func (s *store) ListTeams(ctx context.Context, collection *mongo.Collection) (te
 	if err := cur.Err(); err != nil {
 	}
 	return teams, err
+}
+
+func (s *store) FindTeamByID(ctx context.Context, teamID primitive.ObjectID, collection *mongo.Collection) (team *Team, err error) {
+	err = collection.FindOne(ctx, bson.D{{"_id", teamID}}).Decode(&team)
+
+	if err != nil {
+		fmt.Println("Error in FindTeamByID: ", err)
+		return
+	}
+	return team, err
 }

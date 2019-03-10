@@ -5,7 +5,6 @@ import (
 
 	"github.com/A9u/function_junction/app"
 	"github.com/A9u/function_junction/config"
-	"github.com/A9u/function_junction/db"
 	"github.com/A9u/function_junction/server"
 	"github.com/urfave/cli"
 )
@@ -25,28 +24,6 @@ func main() {
 			Action: func(c *cli.Context) error {
 				server.StartAPIServer()
 				return nil
-			},
-		},
-		{
-			Name:  "create_migration",
-			Usage: "create migration file",
-			Action: func(c *cli.Context) error {
-				return db.CreateMigrationFile(c.Args().Get(0))
-			},
-		},
-		{
-			Name:  "migrate",
-			Usage: "run db migrations",
-			Action: func(c *cli.Context) error {
-				err := db.RunMigrations()
-				return err
-			},
-		},
-		{
-			Name:  "rollback",
-			Usage: "rollback migrations",
-			Action: func(c *cli.Context) error {
-				return db.RollbackMigrations(c.Args().Get(0))
 			},
 		},
 	}

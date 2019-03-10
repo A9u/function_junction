@@ -1,19 +1,11 @@
 package team
 
 import (
-	"time"
-
 	"github.com/A9u/function_junction/db"
-	"github.com/mongodb/mongo-go-driver/bson/primitive"
 )
 
 type createRequest struct {
 	Name        string             `json:"name"`
-	Type        string             `json:"type"`
-	EventID     primitive.ObjectID `json:"event_id"`
-	CreatorID   primitive.ObjectID `json:"creator_id"`
-	CreatedAt   time.Time          `json:"created_at"`
-	UpdatedAt   time.Time          `json:"updated_at"`
 	ShowcaseUrl string             `json:"showcase_url"`
 	Description string             `json:"description"`
 }
@@ -28,3 +20,17 @@ func (cr createRequest) Validate() (err error) {
 	}
 	return
 }
+
+type createResponse struct {
+  Team *db.Team `json:"team"`
+}
+
+/*
+func (cr createRequest) ValidateEvent(ctx, eventID) (err error) {
+  _, err := db.store.FindEventByID(ctx, eventID, app.GetCollection("events")
+  if err != "" {
+    return errInvalidEventID
+  }
+  return
+}
+*/

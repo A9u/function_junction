@@ -5,18 +5,22 @@ import (
 	"net/http"
 
 	"github.com/A9u/function_junction/api"
+  "github.com/gorilla/mux"
+  "github.com/mongodb/mongo-go-driver/bson/primitive"
 )
 
 func Create(service Service) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		eventID, err := primitive.ObjectIDFromHex(vars["event_id"])
 		var c createRequest
-		err := json.NewDecoder(req.Body).Decode(&c)
+		err = json.NewDecoder(req.Body).Decode(&c)
 		if err != nil {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return
 		}
 
-		err = service.create(req.Context(), c)
+    response, err := service.create(req.Context(), c, eventID)
 		if isBadRequest(err) {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return
@@ -27,7 +31,7 @@ func Create(service Service) http.HandlerFunc {
 			return
 		}
 
-		api.Success(rw, http.StatusCreated, api.Response{Message: "Created Successfully"})
+		api.Success(rw, http.StatusCreated, response)
 	})
 }
 
