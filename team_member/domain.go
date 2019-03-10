@@ -18,8 +18,6 @@ type createRequest struct {
 	Emails []string `json:emails`
 }
 
-
-
 type findByIDResponse struct {
 	TeamMember db.TeamMember `json:"team_member"`
 }
@@ -29,8 +27,7 @@ type listResponse struct {
 }
 
 type createResponse struct {
-	TeamMember db.TeamMember `json:"team_member"`
-	Message   string       `json:"message"`
+	FailedEmails []string `json:"failed_emails"`
 }
 
 type updateResponse struct {
@@ -48,9 +45,8 @@ func (ur updateRequest) Validate() (err error) {
 	if ur.Name == "" {
 		return errEmptyName
 	}
-	
+
 	// re := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@joshsoftware.com$")
 
-	
 	return
 }
