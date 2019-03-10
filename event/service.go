@@ -90,12 +90,19 @@ func (es *eventService) findByID(ctx context.Context, id primitive.ObjectID) (re
 }
 
 func (es *eventService) update(ctx context.Context, eu updateRequest, id primitive.ObjectID) (response updateResponse, err error) {
+	oldEvent, err := es.store.FindEventByID(ctx, id, es.collection)
+
 	event, err := es.store.UpdateEvent(ctx, id, es.collection, &db.Event{Title: eu.Title, Description: eu.Description,
 		Venue: eu.Venue, IsPublished: eu.IsPublished})
+
 	if err != nil {
 		es.logger.Error("Error updating event", "err", err.Error(), "event", eu)
 		return
 	}
+
+	currentUser := ctx.Value("currentUser").(db.User)
+
+	notifyOthers(oldEvent, event, currentUser)
 	response.Event = event
 	return
 }
@@ -126,6 +133,29 @@ func notifyAll(event *db.Event, currentUser db.User) {
 	mail.Subject = "New Event added - " + event.Title
 	mail.Body = "A new event <b>" + event.Title + "</b> has been added. " +
 		"<p> It is at " + event.Venue + " from " + event.StartDateTime.Format(time.ANSIC) + " to " +
+		event.EndDateTime.Format(time.ANSIC) + ". </p>" +
+		"<p> Please check the details <a href=" + config.URL() + "events/" + event.Id.String() + " > here </a> <p>"
+
+	mail.Send()
+}
+
+func notifyOthers(oldEvent db.Event, newEvent *db.Event, currentUser db.User) {
+	if !oldEvent.IsPublished && newEvent.IsPublished {
+		notifyAll(newEvent, currentUser)
+	} else if oldEvent.Venue != newEvent.Venue || oldEvent.StartDateTime != newEvent.StartDateTime || oldEvent.EndDateTime != newEvent.EndDateTime {
+		notifyChange(newEvent, currentUser)
+	}
+}
+
+func notifyChange(event *db.Event, currentUser db.User) {
+	mail := mailer.Email{}
+	mail.From = currentUser.Email
+	mail.To = []string{"all@joshsoftware.com"}
+
+	mail.Subject = "Event - " + event.Title + " has been updated"
+
+	mail.Body = "The event - <b>" + event.Title + "</b> has been updated." +
+		"<p> It is now at " + event.Venue + " from " + event.StartDateTime.Format(time.ANSIC) + " to " +
 		event.EndDateTime.Format(time.ANSIC) + ". </p>" +
 		"<p> Please check the details <a href=" + config.URL() + "events/" + event.Id.String() + " > here </a> <p>"
 
