@@ -43,7 +43,7 @@ func (es *eventService) list(ctx context.Context) (response listResponse, err er
 }
 
 func (es *eventService) create(ctx context.Context, c createRequest) (response eventResponse, err error) {
-	err = c.CreateValidate()
+	err = c.EventValidate()
 	if err != nil {
 		es.logger.Error("Invalid request for event create", "msg", err.Error(), "event", c)
 		return
@@ -101,7 +101,7 @@ func (es *eventService) update(ctx context.Context, eu updateRequest, id primiti
 		return
 	}
 
-	err = eu.UpdateValidate()
+	err = eu.EventValidate()
 	if err != nil {
 		es.logger.Error("Invalid request for event update", "msg", err.Error(), "event", eu)
 		return
