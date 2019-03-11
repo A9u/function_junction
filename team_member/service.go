@@ -146,7 +146,7 @@ func (tms *teamMemberService) update(ctx context.Context, tm updateRequest, id p
 		return
 	}
 
-	event, err := tms.store.FindEventByID(ctx, eventID, tms.eventCollection)
+	event, err := tms.store.FindEventByID(ctx, eventID)
 	if err != nil {
 		tms.logger.Error("Event Does not Exist in Db")
 		err = errEventDoesNotExist

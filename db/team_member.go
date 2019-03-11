@@ -117,7 +117,7 @@ func (s *store) IsTeamComplete(ctx context.Context, collection *mongo.Collection
 	// TODO: first check if error is there or count is 0
 	// then move to success case
 	if err == nil {
-		event, err := s.FindEventByID(ctx, eventID, app.GetCollection("events"))
+		event, err := s.FindEventByID(ctx, eventID)
 		if err == nil {
 			if int64(event.MaxSize) == count {
 				return true, nil

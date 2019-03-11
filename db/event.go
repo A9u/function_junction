@@ -8,7 +8,6 @@ import (
 	"github.com/A9u/function_junction/app"
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
-	"github.com/mongodb/mongo-go-driver/mongo"
 )
 
 type Event struct {
@@ -36,13 +35,14 @@ type EventInfo struct {
 	IsAttending          bool     `json:"is_attending"`
 }
 
-func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, event Event) (eventInfo EventInfo, err error) {
+func (s *store) CreateEvent(ctx context.Context, event Event) (eventInfo EventInfo, err error) {
 	event.CreatedAt = time.Now()
 	event.UpdatedAt = time.Now()
 	if event.IsIndividualEvent == true && event.IsShowcasable == true {
 		event.MinSize = 1
 		event.MaxSize = 1
 	}
+	collection := app.GetCollection("events")
 	res, err := collection.InsertOne(ctx, event)
 
 	id := res.InsertedID
@@ -51,7 +51,8 @@ func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, e
 	return eventInfo, err
 }
 
-func (s *store) ListEvents(ctx context.Context, collection *mongo.Collection) (eventsInfo []EventInfo, err error) {
+func (s *store) ListEvents(ctx context.Context) (eventsInfo []EventInfo, err error) {
+	collection := app.GetCollection("events")
 	cur, err := collection.Find(ctx, bson.D{})
 	if err != nil {
 		// TODO: use logger
@@ -72,7 +73,8 @@ func (s *store) ListEvents(ctx context.Context, collection *mongo.Collection) (e
 	return eventsInfo, err
 }
 
-func (s *store) FindEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (eventInfo EventInfo, err error) {
+func (s *store) FindEventByID(ctx context.Context, eventID primitive.ObjectID) (eventInfo EventInfo, err error) {
+	collection := app.GetCollection("events")
 	var event Event
 	err = collection.FindOne(ctx, bson.D{{"_id", eventID}}).Decode(&event)
 	eventInfo = getEventInfo(s, ctx, event)
@@ -86,12 +88,14 @@ func (s *store) FindEventByName(ctx context.Context, eventName string) (eventID 
 	return event.ID, err
 }
 
-func (s *store) DeleteEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (err error) {
+func (s *store) DeleteEventByID(ctx context.Context, eventID primitive.ObjectID) (err error) {
+	collection := app.GetCollection("events")
 	_, err = collection.DeleteOne(ctx, bson.D{{"_id", eventID}})
 	return err
 }
 
-func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, collection *mongo.Collection, event Event) (eventInfo EventInfo, err error) {
+func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, event Event) (eventInfo EventInfo, err error) {
+	collection := app.GetCollection("events")
 	_, err = collection.UpdateOne(ctx, bson.D{{"_id", id}}, bson.D{{"$set",
 		bson.D{{"title", event.Title},
 			{"description", event.Description},
