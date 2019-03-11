@@ -31,17 +31,15 @@ func (es *eventService) list(ctx context.Context) (response listResponse, err er
 	events, err := es.store.ListEvents(ctx)
 	if err == db.ErrEventNotExist {
 		es.logger.Error("No events present", "err", err.Error())
-		// TODO: do not manually return if you already have named returns
-		// assign to err object and simply call return
 		return response, errNoEvents
 	}
+
 	if err != nil {
 		es.logger.Error("Error listing events", "err", err.Error())
 		return
 	}
 
 	response.Events = events
-
 	return
 }
 

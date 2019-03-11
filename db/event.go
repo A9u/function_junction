@@ -48,7 +48,7 @@ func (s *store) CreateEvent(ctx context.Context, event Event) (eventInfo EventIn
 	id := res.InsertedID
 	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&event)
 	eventInfo = getEventInfo(s, ctx, event)
-	return eventInfo, err
+	return
 }
 
 func (s *store) ListEvents(ctx context.Context) (eventsInfo []EventInfo, err error) {
@@ -70,7 +70,7 @@ func (s *store) ListEvents(ctx context.Context) (eventsInfo []EventInfo, err err
 	}
 	if err := cur.Err(); err != nil {
 	}
-	return eventsInfo, err
+	return
 }
 
 func (s *store) FindEventByID(ctx context.Context, eventID primitive.ObjectID) (eventInfo EventInfo, err error) {
@@ -78,20 +78,21 @@ func (s *store) FindEventByID(ctx context.Context, eventID primitive.ObjectID) (
 	var event Event
 	err = collection.FindOne(ctx, bson.D{{"_id", eventID}}).Decode(&event)
 	eventInfo = getEventInfo(s, ctx, event)
-	return eventInfo, err
+	return
 }
 
 func (s *store) FindEventByName(ctx context.Context, eventName string) (eventID primitive.ObjectID, err error) {
 	collection := app.GetCollection("events")
 	var event Event
 	err = collection.FindOne(ctx, bson.D{{"title", eventName}}).Decode(&event)
-	return event.ID, err
+	eventID = event.ID
+	return
 }
 
 func (s *store) DeleteEventByID(ctx context.Context, eventID primitive.ObjectID) (err error) {
 	collection := app.GetCollection("events")
 	_, err = collection.DeleteOne(ctx, bson.D{{"_id", eventID}})
-	return err
+	return
 }
 
 func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, event Event) (eventInfo EventInfo, err error) {
@@ -111,7 +112,7 @@ func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, event Ev
 			{"updatedat", time.Now()}}}})
 	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&event)
 	eventInfo = getEventInfo(s, ctx, event)
-	return eventInfo, err
+	return
 }
 
 func getEventInfo(s *store, ctx context.Context, event Event) (eventInfo EventInfo) {
@@ -125,5 +126,5 @@ func getEventInfo(s *store, ctx context.Context, event Event) (eventInfo EventIn
 	}
 	isAttending := s.IsAttendingEvent(ctx, event.ID)
 	eventInfo = EventInfo{Event: event, CreatorInfo: creatorInfo, NumberOfParticipants: participants, IsAttending: isAttending}
-	return eventInfo
+	return
 }
