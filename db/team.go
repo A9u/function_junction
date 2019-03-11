@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/A9u/function_junction/app"
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
-  "github.com/A9u/function_junction/app"
 )
 
 type Team struct {
-	ID                primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	ID          primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	Name        string             `json:"name"`
 	EventID     primitive.ObjectID `json:"event_id"`
 	CreatorID   primitive.ObjectID `json:"creator_id"`
@@ -23,9 +23,8 @@ type Team struct {
 }
 
 type TeamInfo struct {
-  *Team
-  CreatorInfo       UserInfo `json:"created_by"`
-
+	*Team
+	CreatorInfo UserInfo `json:"created_by"`
 }
 
 func (s *store) CreateTeam(ctx context.Context, collection *mongo.Collection, team *Team) (createdTeam *TeamInfo, err error) {
@@ -39,10 +38,10 @@ func (s *store) CreateTeam(ctx context.Context, collection *mongo.Collection, te
 	}
 	id := res.InsertedID
 	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&team)
-  creatorInfo, _ := FindUserInfoByID(ctx, team.CreatorID)
-  teamMember := TeamMember{TeamID: team.ID, Status: "Accepted", InviteeID: team.CreatorID, EventID: team.EventID}
-  s.CreateTeamMember(ctx, app.GetCollection("team_members"), &teamMember)
-  teamInfo := TeamInfo{Team: team, CreatorInfo: creatorInfo}
+	creatorInfo, _ := FindUserInfoByID(ctx, team.CreatorID)
+	teamMember := TeamMember{TeamID: team.ID, Status: "Accepted", InviteeID: team.CreatorID, EventID: team.EventID}
+	s.CreateTeamMember(ctx, app.GetCollection("team_members"), &teamMember)
+	teamInfo := TeamInfo{Team: team, CreatorInfo: creatorInfo}
 	return &teamInfo, err
 }
 
@@ -58,8 +57,8 @@ func (s *store) ListTeams(ctx context.Context, collection *mongo.Collection, eve
 	for cur.Next(ctx) {
 		var elem Team
 		err = cur.Decode(&elem)
-    creatorInfo, _ := FindUserInfoByID(ctx, elem.CreatorID)
-    teamInfo := TeamInfo{Team: &elem, CreatorInfo: creatorInfo}
+		creatorInfo, _ := FindUserInfoByID(ctx, elem.CreatorID)
+		teamInfo := TeamInfo{Team: &elem, CreatorInfo: creatorInfo}
 		teamsInfo = append(teamsInfo, &teamInfo)
 	}
 	if err := cur.Err(); err != nil {

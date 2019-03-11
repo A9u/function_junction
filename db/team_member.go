@@ -3,15 +3,16 @@ package db
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/A9u/function_junction/app"
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
-	"time"
 )
 
-type TeamMember struct { 
-	ID       primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+type TeamMember struct {
+	ID        primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	Status    string             `json:"status"`
 	InviteeID primitive.ObjectID `json:"-"`
 	InviterID primitive.ObjectID `json:"-"`
@@ -21,25 +22,26 @@ type TeamMember struct {
 	UpdatedAt time.Time          `json:"updated_at"`
 }
 
-type TeamMemberInfo struct{
+type TeamMemberInfo struct {
 	TeamMember
 	InviteeInfo `json:"Invitee"`
 	InviterInfo `json:"Inviter"`
 }
 
-type InviteeInfo struct{
-	InviteeID primitive.ObjectID `json:"invitee_id"`
-	InviteeName string `json:"invitee_name"`
+// TODO: can we reuse the same struct which contains only ID and Name
+// and then we can have the object in parent struct which has names like inviter, invitee
+type InviteeInfo struct {
+	InviteeID   primitive.ObjectID `json:"invitee_id"`
+	InviteeName string             `json:"invitee_name"`
 }
 
-type InviterInfo struct{
-	InviterID primitive.ObjectID `json:"inviter_id"`
-	InviterName string `json:"inviter_name"`
+type InviterInfo struct {
+	InviterID   primitive.ObjectID `json:"inviter_id"`
+	InviterName string             `json:"inviter_name"`
 }
-
 
 func (s *store) CreateTeamMember(ctx context.Context, collection *mongo.Collection, teamMember *TeamMember) (createdTeamMember TeamMember, err error) {
-	fmt.Println("teamMemner" ,teamMember)
+	fmt.Println("teamMemner", teamMember)
 	teamMember.CreatedAt = time.Now()
 	fmt.Println("teamMember", teamMember)
 
@@ -48,7 +50,7 @@ func (s *store) CreateTeamMember(ctx context.Context, collection *mongo.Collecti
 		fmt.Println("Error in CreateTeamMember: ", err)
 		return
 	}
-	id :=  res.InsertedID
+	id := res.InsertedID
 	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&teamMember)
 	return *teamMember, err
 }
@@ -69,15 +71,15 @@ func (s *store) ListTeamMember(ctx context.Context, teamID primitive.ObjectID, e
 			fmt.Println("Invitee does not exist:", err)
 			return
 		}
-		inviteeInfo := InviteeInfo{ InviteeID: user.ID, InviteeName: user.Email}
+		inviteeInfo := InviteeInfo{InviteeID: user.ID, InviteeName: user.Email}
 
 		err = userCollection.FindOne(ctx, bson.D{{"_id", elem.InviterID}}).Decode(&user)
 		if err != nil {
 			fmt.Println("Inviter does not exist:", err)
 			return
 		}
-		inviterInfo := InviterInfo{ InviterID: user.ID, InviterName: user.Email}
-		teamMemberInfo := TeamMemberInfo{ TeamMember: elem, InviteeInfo: inviteeInfo, InviterInfo: inviterInfo }
+		inviterInfo := InviterInfo{InviterID: user.ID, InviterName: user.Email}
+		teamMemberInfo := TeamMemberInfo{TeamMember: elem, InviteeInfo: inviteeInfo, InviterInfo: inviterInfo}
 		teamMembers = append(teamMembers, &teamMemberInfo)
 	}
 	if err = cur.Err(); err != nil {
@@ -97,8 +99,8 @@ func (s *store) FindTeamMemberByID(ctx context.Context, teamMemberID primitive.O
 	return teamMember, err
 }
 
-func (s *store) FindTeamId(ctx context.Context, collection *mongo.Collection, inviterId  primitive.ObjectID, eventID primitive.ObjectID) (teamId  primitive.ObjectID, err error) {
-	var teamMember TeamMember 
+func (s *store) FindTeamId(ctx context.Context, collection *mongo.Collection, inviterId primitive.ObjectID, eventID primitive.ObjectID) (teamId primitive.ObjectID, err error) {
+	var teamMember TeamMember
 	err = collection.FindOne(ctx, bson.D{{"inviterid", inviterId}, {"eventid", eventID}}).Decode(&teamMember)
 
 	if err != nil {
@@ -108,13 +110,17 @@ func (s *store) FindTeamId(ctx context.Context, collection *mongo.Collection, in
 	return teamMember.TeamID, err
 }
 
-func (s *store) IsTeamComplete(ctx context.Context, collection *mongo.Collection, teamID primitive.ObjectID, eventID primitive.ObjectID)( result bool, err error){
+// TODO: func foo(id, name, address string)
+// combine same types
+func (s *store) IsTeamComplete(ctx context.Context, collection *mongo.Collection, teamID primitive.ObjectID, eventID primitive.ObjectID) (result bool, err error) {
 	count, err := collection.Count(ctx, bson.D{{"status", "accept"}, {"teamid", teamID}, {"eventid", eventID}})
+	// TODO: first check if error is there or count is 0
+	// then move to success case
 	if err == nil {
 		event, err := s.FindEventByID(ctx, eventID, app.GetCollection("events"))
 		if err == nil {
-			if (int64(event.MaxSize) == count){
-			return  true, nil
+			if int64(event.MaxSize) == count {
+				return true, nil
 			}
 		}
 	}
@@ -149,12 +155,13 @@ func (s *store) UpdateTeamMember(ctx context.Context, id primitive.ObjectID, col
 		fmt.Println("Error During UpdateTeamMember: ", err)
 		return
 	}
-	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&teamMember)
 
+	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&teamMember)
 	if err != nil {
 		fmt.Println("Error During UpdateTeamMember: ", err)
 		return
 	}
+
 	return *teamMember, err
 }
 
@@ -169,13 +176,13 @@ func (s *store) FindTeamMemberByInviteeIDEventID(ctx context.Context, inviteeID 
 	return teamMember, err
 }
 
-func (s *store) IsAttendingEvent(ctx context.Context, eventID primitive.ObjectID) (is_present bool){
+func (s *store) IsAttendingEvent(ctx context.Context, eventID primitive.ObjectID) (is_present bool) {
 	collection := app.GetCollection("team_members")
 	currentUserID := ctx.Value("currentUser").(User).ID
 	err := collection.FindOne(ctx, bson.D{{"event_id", eventID}, {"status", "accepted"}, {"inviter_id", currentUserID}})
 	if err != nil {
 		err = collection.FindOne(ctx, bson.D{{"event_id", eventID}, {"status", "accepted"}, {"invitee_id", currentUserID}})
-		if err != nil{
+		if err != nil {
 			is_present = false
 		} else {
 			is_present = true
@@ -186,15 +193,16 @@ func (s *store) IsAttendingEvent(ctx context.Context, eventID primitive.ObjectID
 	return
 }
 
-func (s *store) NumberOfIndividualsAttendingEvent(ctx context.Context, eventID primitive.ObjectID) (count int){
+func (s *store) NumberOfIndividualsAttendingEvent(ctx context.Context, eventID primitive.ObjectID) (count int) {
 	collection := app.GetCollection("team_members")
-	var  countattendees int64
+	var countattendees int64
 	countattendees, _ = collection.Count(ctx, bson.D{{"event_id", eventID}, {"status", "accepted"}})
-	 count = int(countattendees)
+	count = int(countattendees)
 	return
 }
 
-func ( s *store) FindListOfInviters(ctx context.Context, currentUser User, userCollection *mongo.Collection, collection *mongo.Collection, eventID primitive.ObjectID) (invitersInfo []*InviterInfo, err error){
+// TODO: instead of invitersInfo []*InviterInfo, we can simply use []InviterInfo
+func (s *store) FindListOfInviters(ctx context.Context, currentUser User, userCollection *mongo.Collection, collection *mongo.Collection, eventID primitive.ObjectID) (invitersInfo []*InviterInfo, err error) {
 	var user User
 	// var usera *User
 	// err = userCollection.FindOne(ctx,  bson.D{{"email", "priyanka@joshsoftware.com"}}).Decode(&usera)
@@ -205,7 +213,7 @@ func ( s *store) FindListOfInviters(ctx context.Context, currentUser User, userC
 		var elem TeamMember
 		err = cur.Decode(&elem)
 		err = userCollection.FindOne(ctx, bson.D{{"_id", elem.InviterID}}).Decode(&user)
-		inviterInfo := InviterInfo{ InviterID: user.ID, InviterName: user.Email}
+		inviterInfo := InviterInfo{InviterID: user.ID, InviterName: user.Email}
 		invitersInfo = append(invitersInfo, &inviterInfo)
 	}
 	return invitersInfo, err

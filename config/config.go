@@ -13,8 +13,9 @@ type config struct {
 	appPort    int
 	db         databaseConfig
 	smtpApiKey string
-	url        string
-	allEmail   string
+	// TODO: the names are not readable
+	url      string
+	allEmail string
 }
 
 var appConfig config

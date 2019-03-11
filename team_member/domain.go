@@ -6,7 +6,7 @@ import (
 )
 
 type updateRequest struct {
-	Status    string             `json:"status"`
+	Status string `json:"status"`
 }
 
 type createRequest struct {
@@ -14,6 +14,7 @@ type createRequest struct {
 }
 
 type InviterslistResponse struct {
+	// TODO: json key should be smaller case in response
 	InvitersInfo []*db.InviterInfo `json:"Inviters"`
 }
 

@@ -3,13 +3,14 @@ package event
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/A9u/function_junction/config"
 	"github.com/A9u/function_junction/db"
 	"github.com/A9u/function_junction/mailer"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"go.uber.org/zap"
-	"time"
 )
 
 type Service interface {
@@ -30,6 +31,8 @@ func (es *eventService) list(ctx context.Context) (response listResponse, err er
 	events, err := es.store.ListEvents(ctx, es.collection)
 	if err == db.ErrEventNotExist {
 		es.logger.Error("No events present", "err", err.Error())
+		// TODO: do not manually return if you already have named returns
+		// assign to err object and simply call return
 		return response, errNoEvents
 	}
 	if err != nil {
@@ -42,14 +45,18 @@ func (es *eventService) list(ctx context.Context) (response listResponse, err er
 	return
 }
 
+// TODO: variable name c is not readable, names can only be a single letter when scope is less
 func (es *eventService) create(ctx context.Context, c createRequest) (response eventResponse, err error) {
+	// TODO: we can call this method only `Validate`.
 	err = c.EventValidate()
 	if err != nil {
 		es.logger.Error("Invalid request for event create", "msg", err.Error(), "event", c)
 		return
 	}
 
+	// TODO: add a check if this value can be type asserted into type db.User
 	currentUser := ctx.Value("currentUser").(db.User)
+	// TODO: do not use camel case in variable names
 	event_info, err := es.store.CreateEvent(ctx, es.collection, &db.Event{
 		Title:             c.Title,
 		Description:       c.Description,
@@ -71,6 +78,7 @@ func (es *eventService) create(ctx context.Context, c createRequest) (response e
 	}
 
 	if event_info.IsPublished {
+		// TODO: lets use a mailerService so that we can mock this while testing
 		notifyAll(event_info, currentUser)
 	}
 
@@ -90,9 +98,10 @@ func (es *eventService) findByID(ctx context.Context, id primitive.ObjectID) (re
 
 func (es *eventService) update(ctx context.Context, eu updateRequest, id primitive.ObjectID) (response eventResponse, err error) {
 	currentUser := ctx.Value("currentUser").(db.User)
+	// TODO: error should be checked immediately
 	oldEvent, err := es.store.FindEventByID(ctx, id, es.collection)
 
-	if (oldEvent.CreatedBy != currentUser.ID){
+	if oldEvent.CreatedBy != currentUser.ID {
 		err = errNotAuthorizedToUpdate
 	}
 

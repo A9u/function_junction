@@ -2,6 +2,7 @@ package mailer
 
 import (
 	"fmt"
+
 	"github.com/A9u/function_junction/config"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
@@ -18,6 +19,7 @@ func getTos(emails []string) []*mail.Email {
 	var tos = make([]*mail.Email, len(emails))
 
 	fmt.Println(len(emails))
+	// TODO: for i, e := range emails{}
 	for i := 0; i < len(emails); i++ {
 		tos[i] = mail.NewEmail("", emails[i])
 	}
@@ -25,6 +27,8 @@ func getTos(emails []string) []*mail.Email {
 	return tos
 }
 
+// TODO: always send err from a method if there are any
+// caller can always decide whether to use them or not
 func (e *Email) Send() {
 	from := mail.NewEmail("", e.From)
 	tos := getTos(e.To)
