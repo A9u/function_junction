@@ -29,11 +29,11 @@ type updateRequest struct {
 }
 
 type listResponse struct {
-	Events []*db.EventInfo `json:"events"`
+	Events []db.EventInfo `json:"events"`
 }
 
 type eventResponse struct {
-	Event *db.EventInfo `json:"event"`
+	Event db.EventInfo `json:"event"`
 }
 
 func (cr createRequest) EventValidate() (err error) {

@@ -30,14 +30,13 @@ type Event struct {
 }
 
 type EventInfo struct {
-	// TODO: why is this a pointer?
-	*Event
+	Event
 	CreatorInfo          UserInfo `json:"created_by"`
 	NumberOfParticipants int      `json:"number_of_participants"`
 	IsAttending          bool     `json:"is_attending"`
 }
 
-func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, event *Event) (eventInfo *EventInfo, err error) {
+func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, event Event) (eventInfo EventInfo, err error) {
 	event.CreatedAt = time.Now()
 	event.UpdatedAt = time.Now()
 	if event.IsIndividualEvent == true && event.IsShowcasable == true {
@@ -52,7 +51,7 @@ func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, e
 	return eventInfo, err
 }
 
-func (s *store) ListEvents(ctx context.Context, collection *mongo.Collection) (eventsInfo []*EventInfo, err error) {
+func (s *store) ListEvents(ctx context.Context, collection *mongo.Collection) (eventsInfo []EventInfo, err error) {
 	cur, err := collection.Find(ctx, bson.D{})
 	if err != nil {
 		// TODO: use logger
@@ -65,7 +64,7 @@ func (s *store) ListEvents(ctx context.Context, collection *mongo.Collection) (e
 		// can we just have a single variable
 		var elem Event
 		err = cur.Decode(&elem)
-		eventInfo := getEventInfo(s, ctx, &elem)
+		eventInfo := getEventInfo(s, ctx, elem)
 		eventsInfo = append(eventsInfo, eventInfo)
 	}
 	if err := cur.Err(); err != nil {
@@ -73,9 +72,8 @@ func (s *store) ListEvents(ctx context.Context, collection *mongo.Collection) (e
 	return eventsInfo, err
 }
 
-func (s *store) FindEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (eventInfo *EventInfo, err error) {
-	//TODO: why is this a pointer ?
-	var event *Event
+func (s *store) FindEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (eventInfo EventInfo, err error) {
+	var event Event
 	err = collection.FindOne(ctx, bson.D{{"_id", eventID}}).Decode(&event)
 	eventInfo = getEventInfo(s, ctx, event)
 	return eventInfo, err
@@ -93,7 +91,7 @@ func (s *store) DeleteEventByID(ctx context.Context, eventID primitive.ObjectID,
 	return err
 }
 
-func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, collection *mongo.Collection, event *Event) (eventInfo *EventInfo, err error) {
+func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, collection *mongo.Collection, event Event) (eventInfo EventInfo, err error) {
 	_, err = collection.UpdateOne(ctx, bson.D{{"_id", id}}, bson.D{{"$set",
 		bson.D{{"title", event.Title},
 			{"description", event.Description},
@@ -112,7 +110,7 @@ func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, collecti
 	return eventInfo, err
 }
 
-func getEventInfo(s *store, ctx context.Context, event *Event) (eventInfo *EventInfo) {
+func getEventInfo(s *store, ctx context.Context, event Event) (eventInfo EventInfo) {
 	creatorInfo, _ := FindUserInfoByID(ctx, event.CreatedBy)
 	participants := 0
 	if event.IsIndividualEvent {
@@ -122,8 +120,6 @@ func getEventInfo(s *store, ctx context.Context, event *Event) (eventInfo *Event
 		participants = len(teams)
 	}
 	isAttending := s.IsAttendingEvent(ctx, event.ID)
-	// TODO: can we assign it directly to named parameter eventInfo
-	eventI := EventInfo{Event: event, CreatorInfo: creatorInfo, NumberOfParticipants: participants, IsAttending: isAttending}
-	eventInfo = &eventI
+	eventInfo = EventInfo{Event: event, CreatorInfo: creatorInfo, NumberOfParticipants: participants, IsAttending: isAttending}
 	return eventInfo
 }
