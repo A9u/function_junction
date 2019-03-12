@@ -87,52 +87,45 @@ func (tms *teamMemberService) create(ctx context.Context, tm createRequest, team
 		return
 	}
 
-	userErrEmails := ""
-	userEmails := ""
-
-	var failedEmails []string
+	var userEmails, userErrEmails []string
 
 	// TODO: use range and remove branching
-	for i := 0; i < len(tm.Emails); i++ {
-		user, err := db.FindUserByEmail(ctx, tm.Emails[i], tms.userCollection)
+	for _, email := range tm.Emails {
+		user, err := db.FindUserByEmail(ctx, email, tms.userCollection)
 
-		if err == nil {
-			_, err := tms.store.FindTeamMemberByInviteeIDEventID(ctx, user.ID, team.EventID, tms.collection)
-
-			if err != nil {
-				_, err := tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
-					InviteeID: user.ID,
-					Status:    "Invited",
-					InviterID: currentUser.ID,
-					TeamID:    teamID,
-					EventID:   team.EventID,
-				})
-
-				if err == nil {
-					userEmails += user.Email + ","
-				}
-			} else {
-				userErrEmails += tm.Emails[i] + ","
-			}
-		} else {
-			userErrEmails += tm.Emails[i] + ","
+		if err != nil {
+			userErrEmails = append(userErrEmails, email)
+			continue
 		}
+
+		_, err = tms.store.FindTeamMemberByInviteeIDEventID(ctx, user.ID, team.EventID, tms.collection)
+
+		if err != nil {
+			userErrEmails = append(userErrEmails, email)
+			continue
+		}
+
+		_, err = tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
+			InviteeID: user.ID,
+			Status:    "Invited",
+			InviterID: currentUser.ID,
+			TeamID:    teamID,
+			EventID:   team.EventID,
+		})
+
+		if err != nil {
+			userErrEmails = append(userErrEmails, email)
+			continue
+		}
+
+		userEmails = append(userEmails, email)
 	}
 
 	if len(userEmails) > 0 {
-		userEmails = strings.TrimRight(userEmails, ",")
-		invitees := strings.Split(userEmails, ",")
-		notifyTeamMembers(invitees, team, currentUser, team.EventID)
+		notifyTeamMembers(userEmails, team, currentUser, team.EventID)
 	}
 
-	if len(userErrEmails) > 0 {
-		userErrEmails = strings.TrimRight(userErrEmails, ",")
-		failedEmails = strings.Split(userErrEmails, ",")
-
-		//tms.logger.Errorw("Error creating team member for " + userErrEmails + "err")
-	}
-
-	response.FailedEmails = failedEmails
+	response.FailedEmails = userErrEmails
 	return
 }
 
