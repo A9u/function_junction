@@ -66,6 +66,8 @@ func (s *store) ListTeamMember(ctx context.Context, teamID primitive.ObjectID, e
 	for cur.Next(ctx) {
 		var elem TeamMember
 		err = cur.Decode(&elem)
+    fmt.Println(elem.InviterID)
+    fmt.Println(elem.InviteeID)
 		err = userCollection.FindOne(ctx, bson.D{{"_id", elem.InviteeID}}).Decode(&user)
 		if err != nil {
 			fmt.Println("Invitee does not exist:", err)
@@ -73,11 +75,7 @@ func (s *store) ListTeamMember(ctx context.Context, teamID primitive.ObjectID, e
 		}
 		inviteeInfo := InviteeInfo{InviteeID: user.ID, InviteeName: user.Email}
 
-		err = userCollection.FindOne(ctx, bson.D{{"_id", elem.InviterID}}).Decode(&user)
-		if err != nil {
-			fmt.Println("Inviter does not exist:", err)
-			return
-		}
+		_ = userCollection.FindOne(ctx, bson.D{{"_id", elem.InviterID}}).Decode(&user)
 		inviterInfo := InviterInfo{InviterID: user.ID, InviterName: user.Email}
 		teamMemberInfo := TeamMemberInfo{TeamMember: elem, InviteeInfo: inviteeInfo, InviterInfo: inviterInfo}
 		teamMembers = append(teamMembers, &teamMemberInfo)
