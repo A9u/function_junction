@@ -7,7 +7,6 @@ import (
 	"github.com/mongodb/mongo-go-driver/mongo"
 
 	"fmt"
-	"strings"
 
 	"github.com/A9u/function_junction/config"
 	"github.com/A9u/function_junction/db"
@@ -31,6 +30,7 @@ type teamMemberService struct {
 	teamCollection  *mongo.Collection
 	userCollection  *mongo.Collection
 	eventCollection *mongo.Collection
+	mailer          mailer.MailerService
 }
 
 func (tms *teamMemberService) list(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID) (response listResponse, err error) {
@@ -80,7 +80,7 @@ func (tms *teamMemberService) create(ctx context.Context, tm createRequest, team
 	currentUser := ctx.Value("currentUser").(db.User)
 
 	// TODO: assign empty variables like: var foo string
-	_, err := tms.store.FindTeamMemberByInviteeIDEventID(ctx, teamID, currentUser.ID, tms.collection)
+	_, err = tms.store.FindTeamMemberByInviteeIDEventID(ctx, teamID, currentUser.ID, tms.collection)
 
 	if err != nil {
 		tms.logger.Errorw("Only accepted members can invite", "msg", err.Error(), "team member", tm)
@@ -122,7 +122,7 @@ func (tms *teamMemberService) create(ctx context.Context, tm createRequest, team
 	}
 
 	if len(userEmails) > 0 {
-		notifyTeamMembers(userEmails, team, currentUser, team.EventID)
+		tms.notifyTeamMembers(userEmails, team, currentUser, team.EventID)
 	}
 
 	response.FailedEmails = userErrEmails
@@ -167,7 +167,7 @@ func (tms *teamMemberService) update(ctx context.Context, tm updateRequest, id p
 		err = errTeamDoesNotExist
 		return
 	}
-	if tm.Status == "accept" {
+	if tm.Status == "accepted" {
 		result, _ := tms.store.IsTeamComplete(ctx, tms.collection, teamID, eventID)
 		if result == true {
 			tms.logger.Error("Team is Already Complete")
@@ -182,7 +182,7 @@ func (tms *teamMemberService) update(ctx context.Context, tm updateRequest, id p
 
 	// inviter, err := db.FindUserByID(ctx, teamMember.InviterID)
 	inviter := db.User{}
-	notifyTeamMemberInvitationStatus(inviter, currentUser, team, teamMember)
+	tms.notifyTeamMemberInvitationStatus(inviter, currentUser, team, teamMember)
 
 	response.TeamMember = teamMemberInfo
 	return
@@ -209,7 +209,7 @@ func (tms *teamMemberService) deleteByID(ctx context.Context, id primitive.Objec
 	return
 }
 
-func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection, t *mongo.Collection, u *mongo.Collection, e *mongo.Collection) Service {
+func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection, t *mongo.Collection, u *mongo.Collection, e *mongo.Collection, m mailer.MailerService) Service {
 	return &teamMemberService{
 		store:           s,
 		logger:          l,
@@ -217,29 +217,20 @@ func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection, t *mongo
 		teamCollection:  t,
 		userCollection:  u,
 		eventCollection: e,
+		mailer:          m,
 	}
 }
 
-func notifyTeamMembers(invitees []string, team *db.Team, currentUser db.User, eventID primitive.ObjectID) {
-	mail := mailer.Email{}
-	mail.From = currentUser.Email
-	mail.To = invitees
-	fmt.Println(mail.To)
-	mail.Subject = "Invitation to join " + team.Name
-	mail.Body = "I have invited you to join my team <b>" + team.Name + "</b>." +
+func (tms *teamMemberService) notifyTeamMembers(invitees []string, team *db.Team, currentUser db.User, eventID primitive.ObjectID) {
+	body := "I have invited you to join my team <b>" + team.Name + "</b>." +
 		"<p> Please click <a href=" + config.URL() + "events/" + getStringID(eventID) + " > here </a>. to see more details. <p>"
 
-	mail.Send()
+	tms.mailer.Send(invitees, currentUser.Email, "Invitation to join "+team.Name, body)
 }
 
-func notifyTeamMemberInvitationStatus(inviter db.User, invitee db.User, team *db.Team, teamMember db.TeamMember) {
-	mail := mailer.Email{}
-	mail.From = "priyanka@joshsoftware.com"      //invitee.Email//currentUser.Email
-	mail.To = []string{"tanya@joshsoftware.com"} //inviter.Email
-	fmt.Println(mail.To)
-	mail.Subject = "Invitation " + teamMember.Status + "By" + invitee.Email
-	mail.Body = "I have " + teamMember.Status + " your invitation  to join  team <b>" + team.Name + "</b>."
-	mail.Send()
+func (tms *teamMemberService) notifyTeamMemberInvitationStatus(inviter db.User, invitee db.User, team *db.Team, teamMember db.TeamMember) {
+	body := "I have " + teamMember.Status + " your invitation  to join  team <b>" + team.Name + "</b>."
+	tms.mailer.Send([]string{inviter.Email}, invitee.Email, "Invitation "+teamMember.Status+"By"+invitee.Email, body)
 }
 
 func getStringID(id primitive.ObjectID) string {
