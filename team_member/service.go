@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/A9u/function_junction/config"
+	"github.com/A9u/function_junction/constant"
 	"github.com/A9u/function_junction/db"
 	"github.com/A9u/function_junction/mailer"
 	"go.uber.org/zap"
@@ -100,14 +101,14 @@ func (tms *teamMemberService) create(ctx context.Context, tm createRequest, team
 
 		_, err = tms.store.FindTeamMemberByInviteeIDEventID(ctx, user.ID, team.EventID, tms.collection)
 
-		if err != nil {
+		if err == nil {
 			userErrEmails = append(userErrEmails, email)
 			continue
 		}
 
 		_, err = tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
 			InviteeID: user.ID,
-			Status:    "Invited",
+			Status:    constant.Invited,
 			InviterID: currentUser.ID,
 			TeamID:    teamID,
 			EventID:   team.EventID,
@@ -167,7 +168,7 @@ func (tms *teamMemberService) update(ctx context.Context, tm updateRequest, id p
 		err = errTeamDoesNotExist
 		return
 	}
-	if tm.Status == "accepted" {
+	if tm.Status == constant.Accepted {
 		result, _ := tms.store.IsTeamComplete(ctx, tms.collection, teamID, eventID)
 		if result == true {
 			tms.logger.Error("Team is Already Complete")
