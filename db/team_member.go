@@ -1,0 +1,187 @@
+package db
+
+import (
+	"context"
+	"fmt"
+	"github.com/A9u/function_junction/app"
+	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/bson/primitive"
+	"github.com/mongodb/mongo-go-driver/mongo"
+	"time"
+)
+
+type TeamMember struct { 
+	ID       primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	Status    string             `json:"status"`
+	InviteeID primitive.ObjectID `json:"-"`
+	InviterID primitive.ObjectID `json:"-"`
+	TeamID    primitive.ObjectID `json:"-"`
+	EventID   primitive.ObjectID `json:"event_id"`
+	CreatedAt time.Time          `json:"created_at"`
+	UpdatedAt time.Time          `json:"updated_at"`
+}
+
+type TeamMemberInfo struct{
+	TeamMember
+	InviteeInfo `json:"Invitee"`
+	InviterInfo `json:"Inviter"`
+}
+
+type InviteeInfo struct{
+	InviteeID primitive.ObjectID `json:"invitee_id"`
+	InviteeName string `json:"invitee_name"`
+}
+
+type InviterInfo struct{
+	InviterID primitive.ObjectID `json:"inviter_id"`
+	InviterName string `json:"inviter_name"`
+}
+
+
+func (s *store) CreateTeamMember(ctx context.Context, collection *mongo.Collection, teamMember *TeamMember) (createdTeamMember TeamMember, err error) {
+	fmt.Println("teamMemner" ,teamMember)
+	teamMember.CreatedAt = time.Now()
+	fmt.Println("teamMember", teamMember)
+
+	res, err := collection.InsertOne(ctx, teamMember)
+	if err != nil {
+		fmt.Println("Error in CreateTeamMember: ", err)
+		return
+	}
+	id :=  res.InsertedID
+	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&teamMember)
+	return *teamMember, err
+}
+
+func (s *store) ListTeamMember(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID, collection *mongo.Collection, userCollection *mongo.Collection, eventCollection *mongo.Collection, teamCollection *mongo.Collection) (teamMembers []*TeamMemberInfo, err error) {
+	var user User
+	cur, err := collection.Find(ctx, bson.D{{"teamid", teamID}})
+	if err != nil {
+		fmt.Println("Error in find: ", err)
+		return teamMembers, err
+	}
+	defer cur.Close(ctx)
+	for cur.Next(ctx) {
+		var elem TeamMember
+		err = cur.Decode(&elem)
+		err = userCollection.FindOne(ctx, bson.D{{"_id", elem.InviteeID}}).Decode(&user)
+		if err != nil {
+			fmt.Println("Invitee does not exist:", err)
+			return
+		}
+		inviteeInfo := InviteeInfo{ InviteeID: user.ID, InviteeName: user.Email}
+
+		err = userCollection.FindOne(ctx, bson.D{{"_id", elem.InviterID}}).Decode(&user)
+		if err != nil {
+			fmt.Println("Inviter does not exist:", err)
+			return
+		}
+		inviterInfo := InviterInfo{ InviterID: user.ID, InviterName: user.Email}
+		teamMemberInfo := TeamMemberInfo{ TeamMember: elem, InviteeInfo: inviteeInfo, InviterInfo: inviterInfo }
+		teamMembers = append(teamMembers, &teamMemberInfo)
+	}
+	if err = cur.Err(); err != nil {
+		fmt.Println("Error in currsor: ", err)
+		return
+	}
+	return teamMembers, err
+}
+
+func (s *store) FindTeamMemberByID(ctx context.Context, teamMemberID primitive.ObjectID, collection *mongo.Collection) (teamMember TeamMember, err error) {
+	err = collection.FindOne(ctx, bson.D{{"_id", teamMemberID}}).Decode(&teamMember)
+
+	if err != nil {
+		fmt.Println("Error in FindTeamMemberByID: ", err)
+		return
+	}
+	return teamMember, err
+}
+
+func (s *store) FindTeamId(ctx context.Context, collection *mongo.Collection, inviterId  primitive.ObjectID, eventID primitive.ObjectID) (teamId  primitive.ObjectID, err error) {
+	var teamMember TeamMember 
+	err = collection.FindOne(ctx, bson.D{{"inviterid", inviterId}, {"eventid", eventID}}).Decode(&teamMember)
+
+	if err != nil {
+		fmt.Println("Error in FindTeamMemberByID: ", err)
+		return
+	}
+	return teamMember.TeamID, err
+}
+
+func (s *store) IsTeamComplete(ctx context.Context, collection *mongo.Collection, teamID primitive.ObjectID, eventID primitive.ObjectID)( result bool, err error){
+	count, err := collection.Count(ctx, bson.D{{"status", "accept"}, {"teamid", teamID}, {"eventid", eventID}})
+	if err == nil {
+		event, err := s.FindEventByID(ctx, eventID, app.GetCollection("events"))
+		if err == nil {
+			if (int64(event.MaxSize) == count){
+			return  true, nil
+			}
+		}
+	}
+	if err != nil {
+		return false, err
+	}
+	return false, nil
+}
+
+func (s *store) DeleteTeamMemberByID(ctx context.Context, teamMemberID primitive.ObjectID, collection *mongo.Collection) (err error) {
+	_, err = collection.DeleteOne(ctx, bson.D{{"_id", teamMemberID}})
+	if err != nil {
+		fmt.Println("Error in DeleteTeamMemberByID: ", err)
+		return
+	}
+	return err
+}
+
+func (s *store) UpdateTeamMember(ctx context.Context, id primitive.ObjectID, collection *mongo.Collection, teamMember *TeamMember) (updateTeamMember TeamMember, err error) {
+
+	_, err = collection.UpdateOne(ctx, bson.D{{"_id", id}}, bson.D{{"$set", bson.D{
+		{"status", teamMember.Status},
+		{"teamid", teamMember.TeamID},
+		{"inviterid", teamMember.InviterID},
+		{"inviteeid", teamMember.InviteeID},
+		{"eventid", teamMember.EventID},
+		{"updatedat", time.Now()},
+	},
+	},
+	})
+	if err != nil {
+		fmt.Println("Error During UpdateTeamMember: ", err)
+		return
+	}
+	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&teamMember)
+
+	if err != nil {
+		fmt.Println("Error During UpdateTeamMember: ", err)
+		return
+	}
+	return *teamMember, err
+}
+
+func (s *store) FindTeamMemberByInviteeIDEventID(ctx context.Context, inviteeID primitive.ObjectID, eventID primitive.ObjectID, collection *mongo.Collection) (teamMember *TeamMember, err error) {
+
+	err = collection.FindOne(ctx, bson.D{{"invitee_id", inviteeID}, {"event_id", eventID}, {"status", "accepted"}}).Decode(&teamMember)
+	if err != nil {
+		fmt.Println("Error During Finding team member: ", err)
+		return
+	}
+
+	return teamMember, err
+}
+
+func ( s *store) FindListOfInviters(ctx context.Context, currentUser User, userCollection *mongo.Collection, collection *mongo.Collection, eventID primitive.ObjectID) (invitersInfo []*InviterInfo, err error){
+	var user User
+	// var usera *User
+	// err = userCollection.FindOne(ctx,  bson.D{{"email", "priyanka@joshsoftware.com"}}).Decode(&usera)
+	// fmt.Println("userid", usera.ID)
+	cur, err := collection.Find(ctx, bson.D{{"eventid", eventID}, {"inviteeid", currentUser.ID}, {"status", "invited"}})
+	defer cur.Close(ctx)
+	for cur.Next(ctx) {
+		var elem TeamMember
+		err = cur.Decode(&elem)
+		err = userCollection.FindOne(ctx, bson.D{{"_id", elem.InviterID}}).Decode(&user)
+		inviterInfo := InviterInfo{ InviterID: user.ID, InviterName: user.Email}
+		invitersInfo = append(invitersInfo, &inviterInfo)
+	}
+	return invitersInfo, err
+}

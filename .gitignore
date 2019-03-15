@@ -1,5 +1,6 @@
 vendor
-golang-boilerplate
+function_junction
 application.yml
 coverage*
 out
+Gopkg.lock
