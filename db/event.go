@@ -46,9 +46,20 @@ func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, e
 	}
 	res, err := collection.InsertOne(ctx, event)
 
+	if err != nil {
+		return
+	}
+
 	id := res.InsertedID
 	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&event)
+
 	eventInfo = getEventInfo(s, ctx, event)
+	team := Team{EventID: eventInfo.ID, Name: eventInfo.Title, CreatorID: eventInfo.CreatedBy}
+	_, err = s.CreateTeam(ctx, app.GetCollection("teams"), &team)
+
+	if err != nil {
+		return
+	}
 	return eventInfo, err
 }
 
