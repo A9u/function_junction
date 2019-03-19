@@ -24,20 +24,13 @@ type TeamMember struct {
 
 type TeamMemberInfo struct {
 	TeamMember
-	InviteeInfo `json:"Invitee"`
-	InviterInfo `json:"Inviter"`
-}
-
-// TODO: can we reuse the same struct which contains only ID and Name
-// and then we can have the object in parent struct which has names like inviter, invitee
-type InviteeInfo struct {
-	InviteeID   primitive.ObjectID `json:"invitee_id"`
-	InviteeName string             `json:"invitee_name"`
+	InviteeInfo UserInfo `json:"Invitee"`
+	InviterInfo UserInfo `json:"Inviter"`
 }
 
 type InviterInfo struct {
-	InviterID   primitive.ObjectID `json:"inviter_id"`
-	InviterName string             `json:"inviter_name"`
+	InviterID   primitive.ObjectID `json:"invitee_id"`
+	InviterName string             `json:"invitee_name"`
 }
 
 func (s *store) CreateTeamMember(ctx context.Context, collection *mongo.Collection, teamMember *TeamMember) (createdTeamMember TeamMember, err error) {
@@ -56,7 +49,7 @@ func (s *store) CreateTeamMember(ctx context.Context, collection *mongo.Collecti
 }
 
 func (s *store) ListTeamMember(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID, collection *mongo.Collection, userCollection *mongo.Collection, eventCollection *mongo.Collection, teamCollection *mongo.Collection) (teamMembers []*TeamMemberInfo, err error) {
-	var user User
+	var invitee, inviter UserInfo
 	cur, err := collection.Find(ctx, bson.D{{"teamid", teamID}})
 	if err != nil {
 		fmt.Println("Error in find: ", err)
@@ -66,20 +59,14 @@ func (s *store) ListTeamMember(ctx context.Context, teamID primitive.ObjectID, e
 	for cur.Next(ctx) {
 		var elem TeamMember
 		err = cur.Decode(&elem)
-		err = userCollection.FindOne(ctx, bson.D{{"_id", elem.InviteeID}}).Decode(&user)
+		invitee, err = FindUserInfoByID(ctx, elem.InviteeID)
 		if err != nil {
 			fmt.Println("Invitee does not exist:", err)
 			return
 		}
-		inviteeInfo := InviteeInfo{InviteeID: user.ID, InviteeName: user.Email}
 
-		err = userCollection.FindOne(ctx, bson.D{{"_id", elem.InviterID}}).Decode(&user)
-		if err != nil {
-			fmt.Println("Inviter does not exist:", err)
-			return
-		}
-		inviterInfo := InviterInfo{InviterID: user.ID, InviterName: user.Email}
-		teamMemberInfo := TeamMemberInfo{TeamMember: elem, InviteeInfo: inviteeInfo, InviterInfo: inviterInfo}
+		inviter, _ = FindUserInfoByID(ctx, elem.InviterID)
+		teamMemberInfo := TeamMemberInfo{TeamMember: elem, InviteeInfo: invitee, InviterInfo: inviter}
 		teamMembers = append(teamMembers, &teamMemberInfo)
 	}
 	if err = cur.Err(); err != nil {
