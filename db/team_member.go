@@ -230,3 +230,15 @@ func (s *store) FindTeamMemberByInviteeIDTeamID(ctx context.Context, teamID prim
 
 	return teamMember, err
 }
+
+func (s *store) FindInvitedTeamMember(ctx context.Context, teamID, inviteeID primitive.ObjectID, collection *mongo.Collection) (teamMember *TeamMember, err error) {
+
+	err = collection.FindOne(ctx, bson.D{{"teamid", teamID}, {"inviteeid", inviteeID}, {"status", constant.Invited}}).Decode(&teamMember)
+
+	if err != nil {
+		fmt.Println("Error finding invited team member: ", err)
+		return
+	}
+
+	return
+}

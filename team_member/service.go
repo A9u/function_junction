@@ -106,13 +106,17 @@ func (tms *teamMemberService) create(ctx context.Context, tm createRequest, team
 			continue
 		}
 
-		_, err = tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
-			InviteeID: user.ID,
-			Status:    constant.Invited,
-			InviterID: currentUser.ID,
-			TeamID:    teamID,
-			EventID:   team.EventID,
-		})
+		_, err = tms.store.FindInvitedTeamMember(ctx, team.ID, user.ID, tms.collection)
+
+		if err != nil {
+			_, err = tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
+				InviteeID: user.ID,
+				Status:    constant.Invited,
+				InviterID: currentUser.ID,
+				TeamID:    teamID,
+				EventID:   team.EventID,
+			})
+		}
 
 		if err != nil {
 			userErrEmails = append(userErrEmails, email)
