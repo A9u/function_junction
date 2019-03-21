@@ -12,6 +12,7 @@ import (
 type Service interface {
 	list(ctx context.Context, eventID primitive.ObjectID) (response listResponse, err error)
 	create(ctx context.Context, req createRequest, eventID primitive.ObjectID) (response createResponse, err error)
+	deleteByID(ctx context.Context, teamID primitive.ObjectID) (err error)
 }
 
 type teamService struct {
@@ -54,6 +55,23 @@ func (ts *teamService) create(ctx context.Context, c createRequest, eventID prim
 		return
 	}
 	response.Team = createdTeam
+	return
+}
+
+func (ts *teamService) deleteByID(ctx context.Context, id primitive.ObjectID) (err error) {
+	err = ts.store.DeleteTeamByID(ctx, id, ts.collection)
+	if err != nil {
+		ts.logger.Error("Error deleting Team - ", "err", err.Error(), "team_id", id)
+		return
+	}
+
+	err = ts.store.DeleteAllTeamMembers(ctx, id)
+
+	if err != nil {
+		ts.logger.Error("Error deleting Team Members- ", "err", err.Error(), "team_id", id)
+		return
+	}
+
 	return
 }
 

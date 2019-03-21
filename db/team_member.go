@@ -205,3 +205,9 @@ func (s *store) FindListOfInviters(ctx context.Context, currentUser User, userCo
 	}
 	return invitersInfo, err
 }
+
+func (s *store) DeleteAllTeamMembers(ctx context.Context, teamID primitive.ObjectID) (err error) {
+
+	_, err = s.db.Collection("team_members").DeleteMany(ctx, bson.D{{"team_id", teamID}})
+	return err
+}

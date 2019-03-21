@@ -26,6 +26,7 @@ type Storer interface {
 	CreateTeam(ctx context.Context, collection *mongo.Collection, team *Team) (createdTeam *TeamInfo, err error)
 	ListTeams(ctx context.Context, collection *mongo.Collection, eventID primitive.ObjectID) (teams []*TeamInfo, err error)
 	FindTeamByID(ctx context.Context, teamID primitive.ObjectID, collection *mongo.Collection) (team *Team, err error)
+	DeleteTeamByID(ctx context.Context, teamID primitive.ObjectID, collection *mongo.Collection) (err error)
 
 	// Events
 	CreateEvent(ctx context.Context, collection *mongo.Collection, event *Event) (created_event *EventInfo, err error)
@@ -40,6 +41,7 @@ type Storer interface {
 	FindTeamMemberByID(ctx context.Context, teamMemberID primitive.ObjectID, collection *mongo.Collection) (teamMember TeamMember, err error)
 	DeleteTeamMemberByID(ctx context.Context, teamMemberID primitive.ObjectID, collection *mongo.Collection) (err error)
 	UpdateTeamMember(ctx context.Context, teamMemberID primitive.ObjectID, collection *mongo.Collection, teamMember *TeamMember) (updatedTeamMember TeamMember, err error)
+	DeleteAllTeamMembers(ctx context.Context, teamID primitive.ObjectID) (err error)
 
 	FindListOfInviters(ctx context.Context, currentUser User, userCollection *mongo.Collection, collection *mongo.Collection, eventID primitive.ObjectID) (invitersInfo []*InviterInfo, err error)
 	FindTeamMemberByInviteeIDEventID(ctx context.Context, inviteeID primitive.ObjectID, eventID primitive.ObjectID, collection *mongo.Collection) (teamMember *TeamMember, err error)

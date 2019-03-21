@@ -24,8 +24,8 @@ type Team struct {
 
 type TeamInfo struct {
 	*Team
-	CreatorInfo UserInfo `json:"created_by"`
-  Members    []*TeamMemberInfo `json:"members"`
+	CreatorInfo UserInfo          `json:"created_by"`
+	Members     []*TeamMemberInfo `json:"members"`
 }
 
 func (s *store) CreateTeam(ctx context.Context, collection *mongo.Collection, team *Team) (createdTeam *TeamInfo, err error) {
@@ -59,9 +59,9 @@ func (s *store) ListTeams(ctx context.Context, collection *mongo.Collection, eve
 		var elem Team
 		err = cur.Decode(&elem)
 		creatorInfo, _ := FindUserInfoByID(ctx, elem.CreatorID)
-    members, err := s.ListTeamMember(ctx, elem.ID, eventID, app.GetCollection("team_members"), app.GetCollection("users"), app.GetCollection("events"), app.GetCollection("teams"))
-    fmt.Println(err)
-    teamInfo := TeamInfo{Team: &elem, CreatorInfo: creatorInfo, Members: members}
+		members, err := s.ListTeamMember(ctx, elem.ID, eventID, app.GetCollection("team_members"), app.GetCollection("users"), app.GetCollection("events"), app.GetCollection("teams"))
+		fmt.Println(err)
+		teamInfo := TeamInfo{Team: &elem, CreatorInfo: creatorInfo, Members: members}
 		teamsInfo = append(teamsInfo, &teamInfo)
 	}
 	if err := cur.Err(); err != nil {
@@ -77,4 +77,9 @@ func (s *store) FindTeamByID(ctx context.Context, teamID primitive.ObjectID, col
 		return
 	}
 	return team, err
+}
+
+func (s *store) DeleteTeamByID(ctx context.Context, teamID primitive.ObjectID, collection *mongo.Collection) (err error) {
+	_, err = collection.DeleteOne(ctx, bson.D{{"_id", teamID}})
+	return err
 }
