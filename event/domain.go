@@ -9,6 +9,7 @@ import (
 type createRequest struct {
 	Title             string    `json:"title"`
 	Description       string    `json:"description"`
+	Summary			  string	`json:"summary"`
 	StartDateTime     time.Time `json:"start_date_time"`
 	EndDateTime       time.Time `json:"end_date_time"`
 	IsShowcasable     bool      `json:"is_showcasable"`
@@ -29,11 +30,11 @@ type updateRequest struct {
 }
 
 type listResponse struct {
-	Events []*db.EventInfo `json:"events"`
+	Events []db.EventInfo `json:"events"`
 }
 
 type eventResponse struct {
-	Event *db.EventInfo `json:"event"`
+	Event db.EventInfo `json:"event"`
 }
 
 func (cr createRequest) EventValidate() (err error) {
