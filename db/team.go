@@ -78,3 +78,30 @@ func (s *store) FindTeamByID(ctx context.Context, teamID primitive.ObjectID, col
 	}
 	return team, err
 }
+
+func (s *store) UpdateTeam(ctx context.Context, id primitive.ObjectID, team Team) (createdTeam TeamInfo, err error) {
+	collection := app.GetCollection("teams")
+
+	_, err = collection.UpdateOne(ctx, bson.D{{"_id", id}}, bson.D{{"$set",
+		bson.D{{"name", team.Name},
+			{"showcaseurl", team.ShowcaseUrl},
+			{"description", team.Description},
+			{"updatedat", time.Now()}}}})
+
+	if err != nil {
+		fmt.Println("Error in team update ", err, team)
+		return
+	}
+
+	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&team)
+
+	if err != nil {
+		fmt.Println("Error in team update ", err, team)
+		return
+	}
+
+	creatorInfo, _ := FindUserInfoByID(ctx, team.CreatorID)
+
+	createdTeam = TeamInfo{Team: &team, CreatorInfo: creatorInfo}
+	return
+}
