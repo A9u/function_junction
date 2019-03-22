@@ -43,6 +43,8 @@ type Storer interface {
 
 	FindListOfInviters(ctx context.Context, currentUser User, userCollection *mongo.Collection, collection *mongo.Collection, eventID primitive.ObjectID) (invitersInfo []*InviterInfo, err error)
 	FindTeamMemberByInviteeIDEventID(ctx context.Context, inviteeID primitive.ObjectID, eventID primitive.ObjectID, collection *mongo.Collection) (teamMember *TeamMember, err error)
+	FindTeamMemberByInviteeIDTeamID(ctx context.Context, inviteeID primitive.ObjectID, eventID primitive.ObjectID, collection *mongo.Collection) (teamMember *TeamMember, err error)
+	FindInvitedTeamMember(ctx context.Context, inviteeID primitive.ObjectID, eventID primitive.ObjectID, collection *mongo.Collection) (teamMember *TeamMember, err error)
 	// User
 	//FindUserByID(userID primitive.ObjectID) (user User, err error)
 	// FindUserByEmail(ctx context.Context, email string)(user User, err error)

@@ -25,6 +25,7 @@ type eventService struct {
 	store      db.Storer
 	logger     *zap.SugaredLogger
 	collection *mongo.Collection
+	mailer     mailer.MailerService
 }
 
 func (es *eventService) list(ctx context.Context) (response listResponse, err error) {
@@ -58,7 +59,7 @@ func (es *eventService) create(ctx context.Context, c createRequest) (response e
 	event_info, err := es.store.CreateEvent(ctx, db.Event{
 		Title:             c.Title,
 		Description:       c.Description,
-		Summary:		   c.Summary,
+		Summary:           c.Summary,
 		StartDateTime:     c.StartDateTime,
 		EndDateTime:       c.EndDateTime,
 		IsShowcasable:     c.IsShowcasable,
@@ -78,7 +79,7 @@ func (es *eventService) create(ctx context.Context, c createRequest) (response e
 
 	if event_info.IsPublished {
 		// TODO: lets use a mailerService so that we can mock this while testing
-		notifyAll(event_info, currentUser)
+		err = es.notifyAll(event_info, currentUser)
 	}
 
 	response.Event = event_info
@@ -117,7 +118,7 @@ func (es *eventService) update(ctx context.Context, eu updateRequest, id primiti
 	event_info, err := es.store.UpdateEvent(ctx, id, db.Event{
 		Title:             eu.Title,
 		Description:       eu.Description,
-		Summary:		   eu.Summary,
+		Summary:           eu.Summary,
 		Venue:             eu.Venue,
 		IsPublished:       eu.IsPublished,
 		MinSize:           eu.MinSize,
@@ -129,7 +130,7 @@ func (es *eventService) update(ctx context.Context, eu updateRequest, id primiti
 		IsShowcasable:     eu.IsShowcasable,
 	})
 
-	notifyOthers(oldEvent, event_info, currentUser)
+	err = es.notifyOthers(oldEvent, event_info, currentUser)
 	response.Event = event_info
 	return
 }
@@ -145,50 +146,50 @@ func (es *eventService) deleteByID(ctx context.Context, id primitive.ObjectID) (
 	return
 }
 
-func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection) Service {
+func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection, m mailer.MailerService) Service {
 	return &eventService{
 		store:      s,
 		logger:     l,
 		collection: c,
+		mailer:     m,
 	}
 }
 
-func notifyAll(event db.EventInfo, currentUser db.User) {
-	mail := mailer.Email{}
-	mail.From = currentUser.Email
-	mail.To = []string{config.AllEmail()}
-	mail.Subject = "New Event added - " + event.Title
-	mail.Body = "A new event <b>" + event.Title + "</b> has been added. " +
-		"<p> It is at " + event.Venue + " from " + event.StartDateTime.Format(time.ANSIC) + " to " +
-		event.EndDateTime.Format(time.ANSIC) + ". </p>" +
+func (es *eventService) notifyAll(event *db.EventInfo, currentUser db.User) (err error) {
+	body := "A new event <b>" + event.Title + "</b> has been added. " +
+		"<p> It is at " + event.Venue + " from " + getTimeInAnsiC(event.StartDateTime) + " to " +
+		getTimeInAnsiC(event.EndDateTime) + ". </p>" +
 		"<p> Please check the details <a href=" + config.URL() + "events/" + getEventIDString(event.ID) + " > here </a> <p>"
 
-	mail.Send()
+	err = es.mailer.Send([]string{config.AllEmail()}, currentUser.Email, "New Event added - "+event.Title, body)
+
+	return
 }
 
-func notifyOthers(oldEvent db.EventInfo, newEvent db.EventInfo, currentUser db.User) {
+func (es *eventService) notifyOthers(oldEvent *db.EventInfo, newEvent *db.EventInfo, currentUser db.User) (err error) {
 	if !oldEvent.IsPublished && newEvent.IsPublished {
-		notifyAll(newEvent, currentUser)
+		err = es.notifyAll(newEvent, currentUser)
 	} else if oldEvent.Venue != newEvent.Venue || oldEvent.StartDateTime != newEvent.StartDateTime || oldEvent.EndDateTime != newEvent.EndDateTime {
-		notifyChange(newEvent, currentUser)
+		err = es.notifyChange(newEvent, currentUser)
 	}
 }
 
-func notifyChange(event db.EventInfo, currentUser db.User) {
-	mail := mailer.Email{}
-	mail.From = currentUser.Email
-	mail.To = []string{config.AllEmail()}
+func (es *eventService) notifyChange(event *db.EventInfo, currentUser db.User) (err error) {
 
-	mail.Subject = "Event - " + event.Title + " has been updated"
-
-	mail.Body = "The event - <b>" + event.Title + "</b> has been updated." +
-		"<p> It is now at " + event.Venue + " from " + event.StartDateTime.Format(time.ANSIC) + " to " +
-		event.EndDateTime.Format(time.ANSIC) + ". </p>" +
+	body := "The event - <b>" + event.Title + "</b> has been updated." +
+		"<p> It is now at " + event.Venue + " from " + getTimeInAnsiC(event.StartDateTime) + " to " +
+		getTimeInAnsiC(event.EndDateTime) + ". </p>" +
 		"<p> Please check the details <a href=" + config.URL() + "events/" + getEventIDString(event.ID) + " > here </a> <p>"
 
-	mail.Send()
+	err = es.mailer.Send([]string{config.AllEmail()}, currentUser.Email, "Event - "+event.Title+" has been updated", body)
+
+	return
 }
 
 func getEventIDString(eventID primitive.ObjectID) string {
 	return eventID.Hex()
+}
+
+func getTimeInAnsiC(dateTime time.Time) string {
+	return dateTime.Format(time.ANSIC)
 }
