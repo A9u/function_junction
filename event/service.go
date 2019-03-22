@@ -58,6 +58,7 @@ func (es *eventService) create(ctx context.Context, c createRequest) (response e
 	event_info, err := es.store.CreateEvent(ctx, db.Event{
 		Title:             c.Title,
 		Description:       c.Description,
+		Summary:		   c.Summary,
 		StartDateTime:     c.StartDateTime,
 		EndDateTime:       c.EndDateTime,
 		IsShowcasable:     c.IsShowcasable,
@@ -116,6 +117,7 @@ func (es *eventService) update(ctx context.Context, eu updateRequest, id primiti
 	event_info, err := es.store.UpdateEvent(ctx, id, db.Event{
 		Title:             eu.Title,
 		Description:       eu.Description,
+		Summary:		   eu.Summary,
 		Venue:             eu.Venue,
 		IsPublished:       eu.IsPublished,
 		MinSize:           eu.MinSize,

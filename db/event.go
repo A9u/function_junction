@@ -14,6 +14,7 @@ type Event struct {
 	ID                primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	Title             string             `json:"title"`
 	Description       string             `json:"description"`
+	Summary			  string			 `json:"summary"`
 	StartDateTime     time.Time          `json:"start_date_time"`
 	EndDateTime       time.Time          `json:"end_date_time"`
 	IsShowcasable     bool               `json:"is_showcasable"`
@@ -38,10 +39,16 @@ type EventInfo struct {
 func (s *store) CreateEvent(ctx context.Context, event Event) (eventInfo EventInfo, err error) {
 	event.CreatedAt = time.Now()
 	event.UpdatedAt = time.Now()
-	if event.IsIndividualEvent == true && event.IsShowcasable == true {
-		event.MinSize = 1
-		event.MaxSize = 1
+
+	if event.IsIndividualEvent {
+		event.MinSize = 0
+		event.MaxSize = 0
+		if event.IsShowcasable{
+			event.MinSize = 1
+			event.MaxSize = 1
+		}
 	}
+
 	collection := app.GetCollection("events")
 	res, err := collection.InsertOne(ctx, event)
 
@@ -97,15 +104,24 @@ func (s *store) DeleteEventByID(ctx context.Context, eventID primitive.ObjectID)
 
 func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, event Event) (eventInfo EventInfo, err error) {
 	collection := app.GetCollection("events")
+	if event.IsIndividualEvent {
+		event.MinSize = 0
+		event.MaxSize = 0
+		if event.IsShowcasable{
+			event.MinSize = 1
+			event.MaxSize = 1
+		}
+	}
 	_, err = collection.UpdateOne(ctx, bson.D{{"_id", id}}, bson.D{{"$set",
 		bson.D{{"title", event.Title},
 			{"description", event.Description},
+			{"summary", event.Summary},
 			{"ispublished", event.IsPublished},
 			{"venue", event.Venue},
 			{"startdatetime", event.StartDateTime},
 			{"enddatetime", event.EndDateTime},
 			{"isshowcasable", event.IsShowcasable},
-			{"isindividual_participation", event.IsIndividualEvent},
+			{"isindividualparticipation", event.IsIndividualEvent},
 			{"maxsize", event.MaxSize},
 			{"minsize", event.MinSize},
 			{"registerbefore", event.RegisterBefore},
