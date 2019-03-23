@@ -26,6 +26,7 @@ type Storer interface {
 	CreateTeam(ctx context.Context, collection *mongo.Collection, team *Team) (createdTeam *TeamInfo, err error)
 	ListTeams(ctx context.Context, collection *mongo.Collection, eventID primitive.ObjectID) (teams []*TeamInfo, err error)
 	FindTeamByID(ctx context.Context, teamID primitive.ObjectID, collection *mongo.Collection) (team *Team, err error)
+	FindTeamByEventIDAndName(ctx context.Context, eventID primitive.ObjectID, name string, collection *mongo.Collection) (team *Team, err error)
 
 	// Events
 	CreateEvent(ctx context.Context, collection *mongo.Collection, event *Event) (created_event *EventInfo, err error)

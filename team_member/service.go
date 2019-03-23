@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	"github.com/A9u/function_junction/config"
+
+	"github.com/A9u/function_junction/app"
 	"github.com/A9u/function_junction/db"
 	"github.com/A9u/function_junction/mailer"
 	"go.uber.org/zap"
@@ -17,7 +19,7 @@ import (
 
 type Service interface {
 	list(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID) (response listResponse, err error)
-	create(ctx context.Context, req createRequest, teamID primitive.ObjectID) (response createResponse, err error)
+	create(ctx context.Context, req createRequest, teamID primitive.ObjectID, eventID primitive.ObjectID) (response createResponse, err error)
 	findByID(ctx context.Context, teamMemberID primitive.ObjectID) (response findByIDResponse, err error)
 	deleteByID(ctx context.Context, teamMemberID primitive.ObjectID) (err error)
 	update(ctx context.Context, req updateRequest, teamMemberID primitive.ObjectID, teamID primitive.ObjectID, eventID primitive.ObjectID) (response updateResponse, err error)
@@ -64,68 +66,87 @@ func (tms *teamMemberService) findListOfInviters(ctx context.Context, eventID pr
 	return
 }
 
-func (tms *teamMemberService) create(ctx context.Context, tm createRequest, teamID primitive.ObjectID) (response createResponse, err error) {
-	err = tm.Validate()
-	if err != nil {
-		tms.logger.Errorw("Invalid request for team member create", "msg", err.Error(), "team member", tm)
-		return
-	}
-
-	team, err := tms.store.FindTeamByID(ctx, teamID, tms.teamCollection)
-	if err != nil {
-		tms.logger.Errorw("Invalid request for team member create", "msg", err.Error(), "team member", tm)
-		return
-	}
+func (tms *teamMemberService) create(ctx context.Context, tm createRequest, teamID primitive.ObjectID, eventID primitive.ObjectID) (response createResponse, err error) {
 
 	currentUser := ctx.Value("currentUser").(db.User)
+	zeroValue, _ := primitive.ObjectIDFromHex("")
+	if teamID == zeroValue {
+		event, _ := tms.store.FindEventByID(ctx, eventID, app.GetCollection("events"))
+		fmt.Println(event)
+		team, _ := tms.store.FindTeamByEventIDAndName(ctx, eventID, event.Title, app.GetCollection("teams"))
+		_, err = tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
+			InviteeID: currentUser.ID,
+			Status:    "Accepted",
+			TeamID:    team.ID,
+			EventID:   team.EventID,
+		})
+		if err != nil {
+			return
+		}
+		response.Message = "RSVP Done!"
+		return
+	} else {
+		err = tm.Validate()
+		if err != nil {
+			tms.logger.Errorw("Invalid request for team member create", "msg", err.Error(), "team member", tm)
+			return
+		}
 
-	// TODO: assign empty variables like: var foo string
-	userErrEmails := ""
-	userEmails := ""
+		team, err1 := tms.store.FindTeamByID(ctx, teamID, tms.teamCollection)
+		err = err1
+		if err != nil {
+			tms.logger.Errorw("Invalid request for team member create", "msg", err.Error(), "team member", tm)
+			return
+		}
 
-	var failedEmails []string
+		// TODO: assign empty variables like: var foo string
+		userErrEmails := ""
+		userEmails := ""
 
-	// TODO: use range and remove branching
-	for i := 0; i < len(tm.Emails); i++ {
-		user, err := db.FindUserByEmail(ctx, tm.Emails[i], tms.userCollection)
+		var failedEmails []string
 
-		if err == nil {
-			_, err := tms.store.FindTeamMemberByInviteeIDEventID(ctx, user.ID, team.EventID, tms.collection)
+		// TODO: use range and remove branching
+		for i := 0; i < len(tm.Emails); i++ {
+			user, err := db.FindUserByEmail(ctx, tm.Emails[i], tms.userCollection)
 
-			if err != nil {
-				_, err := tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
-					InviteeID: user.ID,
-					Status:    "Invited",
-					InviterID: currentUser.ID,
-					TeamID:    teamID,
-					EventID:   team.EventID,
-				})
+			if err == nil {
+				_, err := tms.store.FindTeamMemberByInviteeIDEventID(ctx, user.ID, team.EventID, tms.collection)
 
-				if err == nil {
-					userEmails += user.Email + ","
+				if err != nil {
+					_, err := tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
+						InviteeID: user.ID,
+						Status:    "Invited",
+						InviterID: currentUser.ID,
+						TeamID:    teamID,
+						EventID:   team.EventID,
+					})
+
+					if err == nil {
+						userEmails += user.Email + ","
+					}
+				} else {
+					userErrEmails += tm.Emails[i] + ","
 				}
 			} else {
 				userErrEmails += tm.Emails[i] + ","
 			}
-		} else {
-			userErrEmails += tm.Emails[i] + ","
 		}
+
+		if len(userEmails) > 0 {
+			userEmails = strings.TrimRight(userEmails, ",")
+			invitees := strings.Split(userEmails, ",")
+			notifyTeamMembers(invitees, team, currentUser, team.EventID)
+		}
+
+		if len(userErrEmails) > 0 {
+			userErrEmails = strings.TrimRight(userErrEmails, ",")
+			failedEmails = strings.Split(userErrEmails, ",")
+
+			//tms.logger.Errorw("Error creating team member for " + userErrEmails + "err")
+		}
+
+		response.FailedEmails = failedEmails
 	}
-
-	if len(userEmails) > 0 {
-		userEmails = strings.TrimRight(userEmails, ",")
-		invitees := strings.Split(userEmails, ",")
-		notifyTeamMembers(invitees, team, currentUser, team.EventID)
-	}
-
-	if len(userErrEmails) > 0 {
-		userErrEmails = strings.TrimRight(userErrEmails, ",")
-		failedEmails = strings.Split(userErrEmails, ",")
-
-		//tms.logger.Errorw("Error creating team member for " + userErrEmails + "err")
-	}
-
-	response.FailedEmails = failedEmails
 	return
 }
 

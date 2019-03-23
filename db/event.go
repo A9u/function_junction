@@ -54,11 +54,13 @@ func (s *store) CreateEvent(ctx context.Context, collection *mongo.Collection, e
 	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&event)
 
 	eventInfo = getEventInfo(s, ctx, event)
-	team := Team{EventID: eventInfo.ID, Name: eventInfo.Title, CreatorID: eventInfo.CreatedBy}
-	_, err = s.CreateTeam(ctx, app.GetCollection("teams"), &team)
+	if event.IsIndividualEvent == true {
+		team := Team{EventID: eventInfo.ID, Name: eventInfo.Title, CreatorID: eventInfo.CreatedBy}
+		_, err = s.CreateTeam(ctx, app.GetCollection("teams"), &team)
 
-	if err != nil {
-		return
+		if err != nil {
+			return
+		}
 	}
 	return eventInfo, err
 }
