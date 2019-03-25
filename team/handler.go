@@ -53,6 +53,35 @@ func List(service Service) http.HandlerFunc {
 	})
 }
 
+func Update(service Service) http.HandlerFunc {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		id, err := primitive.ObjectIDFromHex(vars["team_id"])
+		if err != nil {
+			api.Error(rw, http.StatusInternalServerError, api.Response{Message: err.Error()})
+		}
+
+		var c createRequest
+		err = json.NewDecoder(req.Body).Decode(&c)
+		if err != nil {
+			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
+			return
+		}
+		resp, err := service.update(req.Context(), c, id)
+		if isBadRequest(err) {
+			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
+			return
+		}
+
+		if err != nil {
+			api.Error(rw, http.StatusInternalServerError, api.Response{Message: err.Error()})
+			return
+		}
+
+		api.Success(rw, http.StatusOK, resp)
+	})
+}
+
 func isBadRequest(err error) bool {
 	return err == errEmptyName || err == errEmptyID
 }

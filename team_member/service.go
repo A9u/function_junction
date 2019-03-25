@@ -71,10 +71,11 @@ func (tms *teamMemberService) create(ctx context.Context, tm createRequest, team
 
 	currentUser := ctx.Value("currentUser").(db.User)
 	zeroValue, _ := primitive.ObjectIDFromHex("")
+	event, _ := tms.store.FindEventByID(ctx, eventID)
+	fmt.Println(event)
+	team, _ := tms.store.FindTeamByEventIDAndName(ctx, eventID, event.Title, app.GetCollection("teams"))
 	if teamID == zeroValue {
-		event, _ := tms.store.FindEventByID(ctx, eventID, app.GetCollection("events"))
-		fmt.Println(event)
-		team, _ := tms.store.FindTeamByEventIDAndName(ctx, eventID, event.Title, app.GetCollection("teams"))
+
 		_, err = tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
 			InviteeID: currentUser.ID,
 			Status:    "Accepted",
@@ -93,58 +94,59 @@ func (tms *teamMemberService) create(ctx context.Context, tm createRequest, team
 			return
 		}
 
-	// TODO: assign empty variables like: var foo string
-	_, err = tms.store.FindTeamMemberByInviteeIDEventID(ctx, teamID, currentUser.ID, tms.collection)
+		// TODO: assign empty variables like: var foo string
+		_, err = tms.store.FindTeamMemberByInviteeIDEventID(ctx, teamID, currentUser.ID, tms.collection)
 
-	if err != nil {
-		tms.logger.Errorw("Only accepted members can invite", "msg", err.Error(), "team member", tm)
+		if err != nil {
+			tms.logger.Errorw("Only accepted members can invite", "msg", err.Error(), "team member", tm)
+			return
+		}
+
+		var userEmails, userErrEmails []string
+
+		// TODO: use range and remove branching
+		for _, email := range tm.Emails {
+			user, err := db.FindUserByEmail(ctx, email, tms.userCollection)
+
+			if err != nil {
+				userErrEmails = append(userErrEmails, email)
+				continue
+			}
+
+			_, err = tms.store.FindTeamMemberByInviteeIDEventID(ctx, user.ID, team.EventID, tms.collection)
+
+			if err == nil {
+				userErrEmails = append(userErrEmails, email)
+				continue
+			}
+
+			_, err = tms.store.FindInvitedTeamMember(ctx, team.ID, user.ID, tms.collection)
+
+			if err != nil {
+				_, err = tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
+					InviteeID: user.ID,
+					Status:    constant.Invited,
+					InviterID: currentUser.ID,
+					TeamID:    teamID,
+					EventID:   team.EventID,
+				})
+			}
+
+			if err != nil {
+				userErrEmails = append(userErrEmails, email)
+				continue
+			}
+
+			userEmails = append(userEmails, email)
+		}
+
+		if len(userEmails) > 0 {
+			tms.notifyTeamMembers(userEmails, team, currentUser, team.EventID)
+		}
+
+		response.FailedEmails = userErrEmails
 		return
 	}
-
-	var userEmails, userErrEmails []string
-
-	// TODO: use range and remove branching
-	for _, email := range tm.Emails {
-		user, err := db.FindUserByEmail(ctx, email, tms.userCollection)
-
-		if err != nil {
-			userErrEmails = append(userErrEmails, email)
-			continue
-		}
-
-		_, err = tms.store.FindTeamMemberByInviteeIDEventID(ctx, user.ID, team.EventID, tms.collection)
-
-		if err == nil {
-			userErrEmails = append(userErrEmails, email)
-			continue
-		}
-
-		_, err = tms.store.FindInvitedTeamMember(ctx, team.ID, user.ID, tms.collection)
-
-		if err != nil {
-			_, err = tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
-				InviteeID: user.ID,
-				Status:    constant.Invited,
-				InviterID: currentUser.ID,
-				TeamID:    teamID,
-				EventID:   team.EventID,
-			})
-		}
-
-		if err != nil {
-			userErrEmails = append(userErrEmails, email)
-			continue
-		}
-
-		userEmails = append(userEmails, email)
-	}
-
-	if len(userEmails) > 0 {
-		tms.notifyTeamMembers(userEmails, team, currentUser, team.EventID)
-	}
-
-	response.FailedEmails = userErrEmails
-	return
 }
 
 func (tms *teamMemberService) update(ctx context.Context, tm updateRequest, id primitive.ObjectID, teamID primitive.ObjectID, eventID primitive.ObjectID) (response updateResponse, err error) {
