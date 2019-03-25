@@ -52,10 +52,23 @@ func (s *store) CreateEvent(ctx context.Context, event Event) (eventInfo EventIn
 	collection := app.GetCollection("events")
 	res, err := collection.InsertOne(ctx, event)
 
+	if err != nil {
+		return
+	}
+
 	id := res.InsertedID
 	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&event)
+
 	eventInfo = getEventInfo(s, ctx, event)
-	return
+	if event.IsIndividualEvent == true {
+		team := Team{EventID: eventInfo.ID, Name: eventInfo.Title, CreatorID: eventInfo.CreatedBy}
+		_, err = s.CreateTeam(ctx, app.GetCollection("teams"), &team)
+
+		if err != nil {
+			return
+		}
+	}
+	return eventInfo, err
 }
 
 func (s *store) ListEvents(ctx context.Context) (eventsInfo []EventInfo, err error) {

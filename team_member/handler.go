@@ -15,14 +15,15 @@ func Create(service Service) http.HandlerFunc {
 
 		queryParams := mux.Vars(req)
 		teamID, err := primitive.ObjectIDFromHex(queryParams["team_id"])
-		fmt.Println("receoved params teamid", teamID)
+		eventID, err1 := primitive.ObjectIDFromHex(queryParams["event_id"])
+		fmt.Println("recieved params teamid", teamID)
 		err = json.NewDecoder(req.Body).Decode(&c)
-		if err != nil {
+		if err != nil || err1 != nil {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return
 		}
 
-		resp, err := service.create(req.Context(), c, teamID)
+		resp, err := service.create(req.Context(), c, teamID, eventID)
 		if isBadRequest(err) {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return

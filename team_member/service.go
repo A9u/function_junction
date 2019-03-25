@@ -10,6 +10,8 @@ import (
 
 	"github.com/A9u/function_junction/config"
 	"github.com/A9u/function_junction/constant"
+
+	"github.com/A9u/function_junction/app"
 	"github.com/A9u/function_junction/db"
 	"github.com/A9u/function_junction/mailer"
 	"go.uber.org/zap"
@@ -17,7 +19,7 @@ import (
 
 type Service interface {
 	list(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID) (response listResponse, err error)
-	create(ctx context.Context, req createRequest, teamID primitive.ObjectID) (response createResponse, err error)
+	create(ctx context.Context, req createRequest, teamID primitive.ObjectID, eventID primitive.ObjectID) (response createResponse, err error)
 	findByID(ctx context.Context, teamMemberID primitive.ObjectID) (response findByIDResponse, err error)
 	deleteByID(ctx context.Context, teamMemberID primitive.ObjectID) (err error)
 	update(ctx context.Context, req updateRequest, teamMemberID primitive.ObjectID, teamID primitive.ObjectID, eventID primitive.ObjectID) (response updateResponse, err error)
@@ -65,20 +67,31 @@ func (tms *teamMemberService) findListOfInviters(ctx context.Context, eventID pr
 	return
 }
 
-func (tms *teamMemberService) create(ctx context.Context, tm createRequest, teamID primitive.ObjectID) (response createResponse, err error) {
-	err = tm.Validate()
-	if err != nil {
-		tms.logger.Errorw("Invalid request for team member create", "msg", err.Error(), "team member", tm)
-		return
-	}
-
-	team, err := tms.store.FindTeamByID(ctx, teamID, tms.teamCollection)
-	if err != nil {
-		tms.logger.Errorw("Invalid request for team member create", "msg", err.Error(), "team member", tm)
-		return
-	}
+func (tms *teamMemberService) create(ctx context.Context, tm createRequest, teamID primitive.ObjectID, eventID primitive.ObjectID) (response createResponse, err error) {
 
 	currentUser := ctx.Value("currentUser").(db.User)
+	zeroValue, _ := primitive.ObjectIDFromHex("")
+	if teamID == zeroValue {
+		event, _ := tms.store.FindEventByID(ctx, eventID, app.GetCollection("events"))
+		fmt.Println(event)
+		team, _ := tms.store.FindTeamByEventIDAndName(ctx, eventID, event.Title, app.GetCollection("teams"))
+		_, err = tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
+			InviteeID: currentUser.ID,
+			Status:    "Accepted",
+			TeamID:    team.ID,
+			EventID:   team.EventID,
+		})
+		if err != nil {
+			return
+		}
+		response.Message = "RSVP Done!"
+		return
+	} else {
+		err = tm.Validate()
+		if err != nil {
+			tms.logger.Errorw("Invalid request for team member create", "msg", err.Error(), "team member", tm)
+			return
+		}
 
 	// TODO: assign empty variables like: var foo string
 	_, err = tms.store.FindTeamMemberByInviteeIDEventID(ctx, teamID, currentUser.ID, tms.collection)

@@ -28,6 +28,7 @@ type listResponse struct {
 
 type createResponse struct {
 	FailedEmails []string `json:"failed_emails"`
+	Message      string   `json:"message"`
 }
 
 type updateResponse struct {
