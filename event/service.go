@@ -155,7 +155,7 @@ func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection, m mailer
 	}
 }
 
-func (es *eventService) notifyAll(event *db.EventInfo, currentUser db.User) (err error) {
+func (es *eventService) notifyAll(event db.EventInfo, currentUser db.User) (err error) {
 	body := "A new event <b>" + event.Title + "</b> has been added. " +
 		"<p> It is at " + event.Venue + " from " + getTimeInAnsiC(event.StartDateTime) + " to " +
 		getTimeInAnsiC(event.EndDateTime) + ". </p>" +
@@ -166,15 +166,16 @@ func (es *eventService) notifyAll(event *db.EventInfo, currentUser db.User) (err
 	return
 }
 
-func (es *eventService) notifyOthers(oldEvent *db.EventInfo, newEvent *db.EventInfo, currentUser db.User) (err error) {
+func (es *eventService) notifyOthers(oldEvent db.EventInfo, newEvent db.EventInfo, currentUser db.User) (err error) {
 	if !oldEvent.IsPublished && newEvent.IsPublished {
 		err = es.notifyAll(newEvent, currentUser)
 	} else if oldEvent.Venue != newEvent.Venue || oldEvent.StartDateTime != newEvent.StartDateTime || oldEvent.EndDateTime != newEvent.EndDateTime {
 		err = es.notifyChange(newEvent, currentUser)
 	}
+	return
 }
 
-func (es *eventService) notifyChange(event *db.EventInfo, currentUser db.User) (err error) {
+func (es *eventService) notifyChange(event db.EventInfo, currentUser db.User) (err error) {
 
 	body := "The event - <b>" + event.Title + "</b> has been updated." +
 		"<p> It is now at " + event.Venue + " from " + getTimeInAnsiC(event.StartDateTime) + " to " +
