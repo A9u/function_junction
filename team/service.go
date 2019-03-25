@@ -64,6 +64,7 @@ func (ts *teamService) update(ctx context.Context, req createRequest, id primiti
 
 	if err != nil {
 		ts.logger.Error("Authorization Error", "msg", err.Error(), "team", req)
+		err = errNotAuthorizedToUpdate
 		return
 	}
 
