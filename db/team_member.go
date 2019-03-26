@@ -165,11 +165,12 @@ func (s *store) FindTeamMemberByInviteeIDEventID(ctx context.Context, inviteeID 
 }
 
 func (s *store) IsAttendingEvent(ctx context.Context, eventID primitive.ObjectID) (is_present bool) {
+	var teamMember TeamMember
 	collection := app.GetCollection("team_members")
 	currentUserID := ctx.Value("currentUser").(User).ID
-	err := collection.FindOne(ctx, bson.D{{"eventid", eventID}, {"status", constant.Accepted}, {"inviterid", currentUserID}})
+	err := collection.FindOne(ctx, bson.D{{"eventid", eventID}, {"status", constant.Accepted}, {"inviterid", currentUserID}}).Decode(&teamMember)
 	if err != nil {
-		err = collection.FindOne(ctx, bson.D{{"eventid", eventID}, {"status", constant.Accepted}, {"inviteeid", currentUserID}})
+		err = collection.FindOne(ctx, bson.D{{"eventid", eventID}, {"status", constant.Accepted}, {"inviteeid", currentUserID}}).Decode(&teamMember)
 		if err != nil {
 			is_present = false
 		} else {
