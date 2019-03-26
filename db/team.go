@@ -43,7 +43,8 @@ func (s *store) CreateTeam(ctx context.Context, collection *mongo.Collection, te
 	creatorInfo, _ := FindUserInfoByID(ctx, team.CreatorID)
 	teamMember := TeamMember{TeamID: team.ID, Status: constant.Accepted, InviteeID: team.CreatorID, EventID: team.EventID}
 	s.CreateTeamMember(ctx, app.GetCollection("team_members"), &teamMember)
-	teamInfo := TeamInfo{Team: team, CreatorInfo: creatorInfo}
+	members, err := s.ListTeamMember(ctx, team.ID, team.EventID, app.GetCollection("team_members"), app.GetCollection("users"), app.GetCollection("events"), app.GetCollection("teams"))
+	teamInfo := TeamInfo{Team: team, CreatorInfo: creatorInfo, Members: members}
 	return &teamInfo, err
 }
 
