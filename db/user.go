@@ -26,7 +26,7 @@ type publicProfile struct {
 
 type UserInfo struct {
 	UserID primitive.ObjectID `json:"user_id"`
-	Name   string             `json:"Name"`
+	Name   string             `json:"name"`
 	Email  string             `json:"email"`
 }
 
