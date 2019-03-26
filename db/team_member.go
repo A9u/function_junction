@@ -155,7 +155,7 @@ func (s *store) UpdateTeamMember(ctx context.Context, id primitive.ObjectID, col
 
 func (s *store) FindTeamMemberByInviteeIDEventID(ctx context.Context, inviteeID primitive.ObjectID, eventID primitive.ObjectID, collection *mongo.Collection) (teamMember *TeamMember, err error) {
 
-	err = collection.FindOne(ctx, bson.D{{"invitee_id", inviteeID}, {"event_id", eventID}, {"status", constant.Accepted}}).Decode(&teamMember)
+	err = collection.FindOne(ctx, bson.D{{"inviteeid", inviteeID}, {"eventid", eventID}, {"status", constant.Accepted}}).Decode(&teamMember)
 	if err != nil {
 		fmt.Println("Error During Finding team member: ", err)
 		return
@@ -167,9 +167,9 @@ func (s *store) FindTeamMemberByInviteeIDEventID(ctx context.Context, inviteeID 
 func (s *store) IsAttendingEvent(ctx context.Context, eventID primitive.ObjectID) (is_present bool) {
 	collection := app.GetCollection("team_members")
 	currentUserID := ctx.Value("currentUser").(User).ID
-	err := collection.FindOne(ctx, bson.D{{"event_id", eventID}, {"status", constant.Accepted}, {"inviter_id", currentUserID}})
+	err := collection.FindOne(ctx, bson.D{{"eventid", eventID}, {"status", constant.Accepted}, {"inviterid", currentUserID}})
 	if err != nil {
-		err = collection.FindOne(ctx, bson.D{{"event_id", eventID}, {"status", constant.Accepted}, {"invitee_id", currentUserID}})
+		err = collection.FindOne(ctx, bson.D{{"eventid", eventID}, {"status", constant.Accepted}, {"inviteeid", currentUserID}})
 		if err != nil {
 			is_present = false
 		} else {
@@ -184,7 +184,7 @@ func (s *store) IsAttendingEvent(ctx context.Context, eventID primitive.ObjectID
 func (s *store) NumberOfIndividualsAttendingEvent(ctx context.Context, eventID primitive.ObjectID) (count int) {
 	collection := app.GetCollection("team_members")
 	var countattendees int64
-	countattendees, _ = collection.Count(ctx, bson.D{{"event_id", eventID}, {"status", constant.Accepted}})
+	countattendees, _ = collection.Count(ctx, bson.D{{"eventid", eventID}, {"status", constant.Accepted}})
 	count = int(countattendees)
 	return
 }
@@ -209,7 +209,7 @@ func (s *store) FindListOfInviters(ctx context.Context, currentUser User, userCo
 
 func (s *store) FindTeamMemberByInviteeIDTeamID(ctx context.Context, inviteeID primitive.ObjectID, teamID primitive.ObjectID) (teamMember TeamMember, err error) {
 	collection := app.GetCollection("team_members")
-	err = collection.FindOne(ctx, bson.D{{"invitee_id", inviteeID}, {"team_id", teamID}, {"status", "accepted"}}).Decode(&teamMember)
+	err = collection.FindOne(ctx, bson.D{{"inviteeid", inviteeID}, {"teamid", teamID}, {"status", "accepted"}}).Decode(&teamMember)
 	if err != nil {
 		fmt.Println("Error During Finding team member: ", err)
 		return
