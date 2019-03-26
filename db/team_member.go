@@ -25,8 +25,8 @@ type TeamMember struct {
 
 type TeamMemberInfo struct {
 	TeamMember
-	InviteeInfo UserInfo `json:"Invitee"`
-	InviterInfo UserInfo `json:"Inviter"`
+	InviteeInfo UserInfo `json:"invitee"`
+	InviterInfo UserInfo `json:"inviter"`
 }
 
 type InviterInfo struct {
