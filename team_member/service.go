@@ -78,7 +78,7 @@ func (tms *teamMemberService) create(ctx context.Context, tm createRequest, team
 
 		_, err = tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
 			InviteeID: currentUser.ID,
-			Status:    "Accepted",
+			Status:    constant.Accepted,
 			TeamID:    team.ID,
 			EventID:   team.EventID,
 		})
