@@ -27,10 +27,12 @@ func initRouter(dep dependencies) (router *mux.Router) {
 	router.HandleFunc("/events/{event_id}", event.FindByID(dep.EventService)).Methods(http.MethodGet).Headers(versionHeader, v1)
 	router.HandleFunc("/events/{event_id}", event.DeleteByID(dep.EventService)).Methods(http.MethodDelete).Headers(versionHeader, v1)
 	router.HandleFunc("/events/{event_id}", event.Update(dep.EventService)).Methods(http.MethodPut).Headers(versionHeader, v1)
+	router.HandleFunc("/events/{event_id}/rsvp", team_member.Create(dep.TeamMemberService)).Methods(http.MethodPost).Headers(versionHeader, v1)
 
 	router.HandleFunc("/events/{event_id}/teams", team.Create(dep.TeamService)).Methods(http.MethodPost).Headers(versionHeader, v1)
 	router.HandleFunc("/events/{event_id}/teams", team.List(dep.TeamService)).Methods(http.MethodGet).Headers(versionHeader, v1)
 	router.HandleFunc("/events/{event_id}/teams/{team_id}", team.DeleteByID(dep.TeamService)).Methods(http.MethodDelete).Headers(versionHeader, v1)
+	router.HandleFunc("/events/{event_id}/teams/{team_id}", team.Update(dep.TeamService)).Methods(http.MethodPut).Headers(versionHeader, v1)
 
 	// TeamMember
 	router.HandleFunc("/events/{event_id}/teams/{team_id}/team_members", team_member.Create(dep.TeamMemberService)).Methods(http.MethodPost).Headers(versionHeader, v1)

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/A9u/function_junction/app"
+	"github.com/A9u/function_junction/constant"
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
@@ -24,8 +25,8 @@ type TeamMember struct {
 
 type TeamMemberInfo struct {
 	TeamMember
-	InviteeInfo UserInfo `json:"Invitee"`
-	InviterInfo UserInfo `json:"Inviter"`
+	InviteeInfo UserInfo `json:"invitee"`
+	InviterInfo UserInfo `json:"inviter"`
 }
 
 type InviterInfo struct {
@@ -100,11 +101,11 @@ func (s *store) FindTeamId(ctx context.Context, collection *mongo.Collection, in
 // TODO: func foo(id, name, address string)
 // combine same types
 func (s *store) IsTeamComplete(ctx context.Context, collection *mongo.Collection, teamID primitive.ObjectID, eventID primitive.ObjectID) (result bool, err error) {
-	count, err := collection.Count(ctx, bson.D{{"status", "accept"}, {"teamid", teamID}, {"eventid", eventID}})
+	count, err := collection.Count(ctx, bson.D{{"status", constant.Accepted}, {"teamid", teamID}, {"eventid", eventID}})
 	// TODO: first check if error is there or count is 0
 	// then move to success case
 	if err == nil {
-		event, err := s.FindEventByID(ctx, eventID, app.GetCollection("events"))
+		event, err := s.FindEventByID(ctx, eventID)
 		if err == nil {
 			if int64(event.MaxSize) == count {
 				return true, nil
@@ -154,7 +155,7 @@ func (s *store) UpdateTeamMember(ctx context.Context, id primitive.ObjectID, col
 
 func (s *store) FindTeamMemberByInviteeIDEventID(ctx context.Context, inviteeID primitive.ObjectID, eventID primitive.ObjectID, collection *mongo.Collection) (teamMember *TeamMember, err error) {
 
-	err = collection.FindOne(ctx, bson.D{{"invitee_id", inviteeID}, {"event_id", eventID}, {"status", "accepted"}}).Decode(&teamMember)
+	err = collection.FindOne(ctx, bson.D{{"inviteeid", inviteeID}, {"eventid", eventID}, {"status", constant.Accepted}}).Decode(&teamMember)
 	if err != nil {
 		fmt.Println("Error During Finding team member: ", err)
 		return
@@ -164,11 +165,12 @@ func (s *store) FindTeamMemberByInviteeIDEventID(ctx context.Context, inviteeID 
 }
 
 func (s *store) IsAttendingEvent(ctx context.Context, eventID primitive.ObjectID) (is_present bool) {
+	var teamMember TeamMember
 	collection := app.GetCollection("team_members")
 	currentUserID := ctx.Value("currentUser").(User).ID
-	err := collection.FindOne(ctx, bson.D{{"event_id", eventID}, {"status", "accepted"}, {"inviter_id", currentUserID}})
+	err := collection.FindOne(ctx, bson.D{{"eventid", eventID}, {"status", constant.Accepted}, {"inviterid", currentUserID}}).Decode(&teamMember)
 	if err != nil {
-		err = collection.FindOne(ctx, bson.D{{"event_id", eventID}, {"status", "accepted"}, {"invitee_id", currentUserID}})
+		err = collection.FindOne(ctx, bson.D{{"eventid", eventID}, {"status", constant.Accepted}, {"inviteeid", currentUserID}}).Decode(&teamMember)
 		if err != nil {
 			is_present = false
 		} else {
@@ -183,7 +185,7 @@ func (s *store) IsAttendingEvent(ctx context.Context, eventID primitive.ObjectID
 func (s *store) NumberOfIndividualsAttendingEvent(ctx context.Context, eventID primitive.ObjectID) (count int) {
 	collection := app.GetCollection("team_members")
 	var countattendees int64
-	countattendees, _ = collection.Count(ctx, bson.D{{"event_id", eventID}, {"status", "accepted"}})
+	countattendees, _ = collection.Count(ctx, bson.D{{"eventid", eventID}, {"status", constant.Accepted}})
 	count = int(countattendees)
 	return
 }
@@ -194,7 +196,7 @@ func (s *store) FindListOfInviters(ctx context.Context, currentUser User, userCo
 	// var usera *User
 	// err = userCollection.FindOne(ctx,  bson.D{{"email", "priyanka@joshsoftware.com"}}).Decode(&usera)
 	// fmt.Println("userid", usera.ID)
-	cur, err := collection.Find(ctx, bson.D{{"eventid", eventID}, {"inviteeid", currentUser.ID}, {"status", "invited"}})
+	cur, err := collection.Find(ctx, bson.D{{"eventid", eventID}, {"inviteeid", currentUser.ID}, {"status", constant.Invited}})
 	defer cur.Close(ctx)
 	for cur.Next(ctx) {
 		var elem TeamMember
@@ -210,4 +212,27 @@ func (s *store) DeleteAllTeamMembers(ctx context.Context, teamID primitive.Objec
 
 	_, err = s.db.Collection("team_members").DeleteMany(ctx, bson.D{{"team_id", teamID}})
 	return err
+}
+
+func (s *store) FindTeamMemberByInviteeIDTeamID(ctx context.Context, inviteeID primitive.ObjectID, teamID primitive.ObjectID) (teamMember TeamMember, err error) {
+	collection := app.GetCollection("team_members")
+	err = collection.FindOne(ctx, bson.D{{"inviteeid", inviteeID}, {"teamid", teamID}, {"status", "accepted"}}).Decode(&teamMember)
+	if err != nil {
+		fmt.Println("Error During Finding team member: ", err)
+		return
+	}
+
+	return
+}
+
+func (s *store) FindInvitedTeamMember(ctx context.Context, teamID, inviteeID primitive.ObjectID, collection *mongo.Collection) (teamMember *TeamMember, err error) {
+
+	err = collection.FindOne(ctx, bson.D{{"teamid", teamID}, {"inviteeid", inviteeID}, {"status", constant.Invited}}).Decode(&teamMember)
+
+	if err != nil {
+		fmt.Println("Error finding invited team member: ", err)
+		return
+	}
+
+	return
 }

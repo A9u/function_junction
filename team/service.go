@@ -13,6 +13,7 @@ type Service interface {
 	list(ctx context.Context, eventID primitive.ObjectID) (response listResponse, err error)
 	create(ctx context.Context, req createRequest, eventID primitive.ObjectID) (response createResponse, err error)
 	deleteByID(ctx context.Context, teamID primitive.ObjectID) (err error)
+	update(ctx context.Context, req createRequest, teamID primitive.ObjectID) (response createResponse, err error)
 }
 
 type teamService struct {
@@ -72,6 +73,32 @@ func (ts *teamService) deleteByID(ctx context.Context, id primitive.ObjectID) (e
 		return
 	}
 
+	return
+}
+
+func (ts *teamService) update(ctx context.Context, req createRequest, id primitive.ObjectID) (response createResponse, err error) {
+	currentUserID := ctx.Value("currentUser").(db.User).ID
+	_, err = ts.store.FindTeamMemberByInviteeIDTeamID(ctx, currentUserID, id)
+
+	if err != nil {
+		ts.logger.Error("Authorization Error", "msg", err.Error(), "team", req)
+		err = errNotAuthorizedToUpdate
+		return
+	}
+
+	err = req.Validate()
+	if err != nil {
+		ts.logger.Error("Invalid request for team update", "msg", err.Error(), "team", req)
+		return
+	}
+
+	updatedTeam, err := ts.store.UpdateTeam(ctx, id, db.Team{
+		Name:        req.Name,
+		Description: req.Description,
+		ShowcaseUrl: req.ShowcaseUrl,
+	})
+
+	response.Team = &updatedTeam
 	return
 }
 

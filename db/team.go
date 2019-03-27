@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/A9u/function_junction/app"
+	"github.com/A9u/function_junction/constant"
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
@@ -40,9 +41,10 @@ func (s *store) CreateTeam(ctx context.Context, collection *mongo.Collection, te
 	id := res.InsertedID
 	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&team)
 	creatorInfo, _ := FindUserInfoByID(ctx, team.CreatorID)
-	teamMember := TeamMember{TeamID: team.ID, Status: "Accepted", InviteeID: team.CreatorID, EventID: team.EventID}
+	teamMember := TeamMember{TeamID: team.ID, Status: constant.Accepted, InviteeID: team.CreatorID, EventID: team.EventID}
 	s.CreateTeamMember(ctx, app.GetCollection("team_members"), &teamMember)
-	teamInfo := TeamInfo{Team: team, CreatorInfo: creatorInfo}
+	members, err := s.ListTeamMember(ctx, team.ID, team.EventID, app.GetCollection("team_members"), app.GetCollection("users"), app.GetCollection("events"), app.GetCollection("teams"))
+	teamInfo := TeamInfo{Team: team, CreatorInfo: creatorInfo, Members: members}
 	return &teamInfo, err
 }
 
@@ -82,4 +84,42 @@ func (s *store) FindTeamByID(ctx context.Context, teamID primitive.ObjectID, col
 func (s *store) DeleteTeamByID(ctx context.Context, teamID primitive.ObjectID, collection *mongo.Collection) (err error) {
 	_, err = collection.DeleteOne(ctx, bson.D{{"_id", teamID}})
 	return err
+}
+
+func (s *store) FindTeamByEventIDAndName(ctx context.Context, eventID primitive.ObjectID, name string, collection *mongo.Collection) (team *Team, err error) {
+
+	err = collection.FindOne(ctx, bson.D{{"eventid", eventID}}).Decode(&team)
+
+	if err != nil {
+		fmt.Println("Error in FindTeamByEventIDAndName: ", err)
+		return
+	}
+	return
+}
+
+func (s *store) UpdateTeam(ctx context.Context, id primitive.ObjectID, team Team) (createdTeam TeamInfo, err error) {
+	collection := app.GetCollection("teams")
+
+	_, err = collection.UpdateOne(ctx, bson.D{{"_id", id}}, bson.D{{"$set",
+		bson.D{{"name", team.Name},
+			{"showcaseurl", team.ShowcaseUrl},
+			{"description", team.Description},
+			{"updatedat", time.Now()}}}})
+
+	if err != nil {
+		fmt.Println("Error in team update ", err, team)
+		return
+	}
+
+	err = collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&team)
+
+	if err != nil {
+		fmt.Println("Error in team update ", err, team)
+		return
+	}
+
+	creatorInfo, _ := FindUserInfoByID(ctx, team.CreatorID)
+
+	createdTeam = TeamInfo{Team: &team, CreatorInfo: creatorInfo}
+	return
 }

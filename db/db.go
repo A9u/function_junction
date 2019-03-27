@@ -27,13 +27,15 @@ type Storer interface {
 	ListTeams(ctx context.Context, collection *mongo.Collection, eventID primitive.ObjectID) (teams []*TeamInfo, err error)
 	FindTeamByID(ctx context.Context, teamID primitive.ObjectID, collection *mongo.Collection) (team *Team, err error)
 	DeleteTeamByID(ctx context.Context, teamID primitive.ObjectID, collection *mongo.Collection) (err error)
+	FindTeamByEventIDAndName(ctx context.Context, eventID primitive.ObjectID, name string, collection *mongo.Collection) (team *Team, err error)
+	UpdateTeam(ctx context.Context, teamID primitive.ObjectID, team Team) (updatedTeam TeamInfo, err error)
 
 	// Events
-	CreateEvent(ctx context.Context, collection *mongo.Collection, event *Event) (created_event *EventInfo, err error)
-	ListEvents(ctx context.Context, collection *mongo.Collection) (events []*EventInfo, err error)
-	FindEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (event *EventInfo, err error)
-	DeleteEventByID(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection) (err error)
-	UpdateEvent(ctx context.Context, eventID primitive.ObjectID, collection *mongo.Collection, event *Event) (updated_event *EventInfo, err error)
+	CreateEvent(ctx context.Context, event Event) (created_event EventInfo, err error)
+	ListEvents(ctx context.Context) (events []EventInfo, err error)
+	FindEventByID(ctx context.Context, eventID primitive.ObjectID) (event EventInfo, err error)
+	DeleteEventByID(ctx context.Context, eventID primitive.ObjectID) (err error)
+	UpdateEvent(ctx context.Context, eventID primitive.ObjectID, event Event) (updated_event EventInfo, err error)
 
 	// TeamMember
 	CreateTeamMember(ctx context.Context, collection *mongo.Collection, teamMember *TeamMember) (createdTeamMember TeamMember, err error)
@@ -45,6 +47,8 @@ type Storer interface {
 
 	FindListOfInviters(ctx context.Context, currentUser User, userCollection *mongo.Collection, collection *mongo.Collection, eventID primitive.ObjectID) (invitersInfo []*InviterInfo, err error)
 	FindTeamMemberByInviteeIDEventID(ctx context.Context, inviteeID primitive.ObjectID, eventID primitive.ObjectID, collection *mongo.Collection) (teamMember *TeamMember, err error)
+	FindTeamMemberByInviteeIDTeamID(ctx context.Context, inviteeID primitive.ObjectID, teamID primitive.ObjectID) (teamMember TeamMember, err error)
+	FindInvitedTeamMember(ctx context.Context, inviteeID primitive.ObjectID, eventID primitive.ObjectID, collection *mongo.Collection) (teamMember *TeamMember, err error)
 	// User
 	//FindUserByID(userID primitive.ObjectID) (user User, err error)
 	// FindUserByEmail(ctx context.Context, email string)(user User, err error)
