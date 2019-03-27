@@ -228,7 +228,7 @@ func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection, t *mongo
 
 func (tms *teamMemberService) notifyTeamMembers(invitees []string, team *db.Team, currentUser db.User, eventID primitive.ObjectID) {
 	body := "I have invited you to join my team <b>" + team.Name + "</b>." +
-		"<p> Please click <a href=" + config.URL() + "events/" + getStringID(eventID) + " > here </a>. to see more details. <p>"
+		"<p> Please click <a href=" + config.URL() + "functions/event-details/" + getStringID(eventID) + " > here </a>. to see more details. <p>"
 
 	tms.mailer.Send(invitees, currentUser.Email, "Invitation to join "+team.Name, body)
 }
