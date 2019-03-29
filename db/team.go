@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/A9u/function_junction/app"
+	"github.com/A9u/function_junction/constant"
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/A9u/function_junction/constant"
 )
 
 type Team struct {
@@ -79,6 +79,11 @@ func (s *store) FindTeamByID(ctx context.Context, teamID primitive.ObjectID, col
 		return
 	}
 	return team, err
+}
+
+func (s *store) DeleteTeamByID(ctx context.Context, teamID primitive.ObjectID, collection *mongo.Collection) (err error) {
+	_, err = collection.DeleteOne(ctx, bson.D{{"_id", teamID}})
+	return err
 }
 
 func (s *store) FindTeamByEventIDAndName(ctx context.Context, eventID primitive.ObjectID, name string, collection *mongo.Collection) (team *Team, err error) {

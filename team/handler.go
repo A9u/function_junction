@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/A9u/function_junction/api"
-  "github.com/gorilla/mux"
-  "github.com/mongodb/mongo-go-driver/bson/primitive"
+	"github.com/gorilla/mux"
+	"github.com/mongodb/mongo-go-driver/bson/primitive"
 )
 
 func Create(service Service) http.HandlerFunc {
@@ -20,7 +20,7 @@ func Create(service Service) http.HandlerFunc {
 			return
 		}
 
-    response, err := service.create(req.Context(), c, eventID)
+		response, err := service.create(req.Context(), c, eventID)
 		if isBadRequest(err) {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return
@@ -50,6 +50,22 @@ func List(service Service) http.HandlerFunc {
 		}
 
 		api.Success(rw, http.StatusOK, resp)
+	})
+}
+
+func DeleteByID(service Service) http.HandlerFunc {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		id, err := primitive.ObjectIDFromHex(vars["team_id"])
+		if err != nil {
+			api.Error(rw, http.StatusInternalServerError, api.Response{Message: err.Error()})
+		}
+		err = service.deleteByID(req.Context(), id)
+		if err != nil {
+			api.Error(rw, http.StatusInternalServerError, api.Response{Message: err.Error()})
+			return
+		}
+		api.Success(rw, http.StatusOK, api.Response{Message: "Deleted Successfully"})
 	})
 }
 
