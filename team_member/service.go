@@ -7,6 +7,7 @@ import (
 	"github.com/mongodb/mongo-go-driver/mongo"
 
 	"fmt"
+	"time"
 
 	"github.com/A9u/function_junction/config"
 	"github.com/A9u/function_junction/constant"
@@ -95,8 +96,8 @@ func (tms *teamMemberService) create(ctx context.Context, tm createRequest, team
 		}
 
 		// TODO: assign empty variables like: var foo string
-		_, err = tms.store.FindTeamMemberByInviteeIDEventID(ctx, currentUser.ID, eventID, tms.collection)
 
+		_, err = tms.store.FindTeamMemberByInviteeIDTeamID(ctx, team.ID, currentUser.ID)
 		if err != nil {
 			tms.logger.Errorw("Only accepted members can invite", "msg", err.Error(), "team member", tm)
 			return
@@ -141,7 +142,7 @@ func (tms *teamMemberService) create(ctx context.Context, tm createRequest, team
 		}
 
 		if len(userEmails) > 0 {
-			tms.notifyTeamMembers(userEmails, team, currentUser, team.EventID)
+			tms.notifyTeamMembers(userEmails, team, currentUser, event)
 		}
 
 		response.FailedEmails = userErrEmails
@@ -241,9 +242,9 @@ func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection, t *mongo
 	}
 }
 
-func (tms *teamMemberService) notifyTeamMembers(invitees []string, team *db.Team, currentUser db.User, eventID primitive.ObjectID) {
-	body := "I have invited you to join my team <b>" + team.Name + "</b>." +
-		"<p> Please click <a href=" + config.URL() + "functions/event-details/" + getStringID(eventID) + " > here </a>. to see more details. <p>"
+func (tms *teamMemberService) notifyTeamMembers(invitees []string, team *db.Team, currentUser db.User, event db.EventInfo) {
+	body := "I have invited you to join my team <b>" + team.Name + "</b> for <b>" + event.Title + "</b> - " + event.Summary + ". It will be held from " + event.StartDateTime.Format(time.ANSIC) + " to " + event.EndDateTime.Format(time.ANSIC) + " at " + event.Venue + ". " +
+		"<p> Please click <a href=" + config.URL() + "functions/event-details/" + getStringID(event.ID) + " > here </a> to see more details. <p>"
 
 	tms.mailer.Send(invitees, currentUser.Email, "Invitation to join "+team.Name, body)
 }

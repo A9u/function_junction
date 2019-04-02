@@ -180,7 +180,7 @@ func (es *eventService) notifyChange(event db.EventInfo, currentUser db.User) (e
 	body := "The event - <b>" + event.Title + "</b> has been updated." +
 		"<p> It is now at " + event.Venue + " from " + getTimeInAnsiC(event.StartDateTime) + " to " +
 		getTimeInAnsiC(event.EndDateTime) + ". </p>" +
-		"<p> Please check the details <a href=" + config.URL() + "events/" + getEventIDString(event.ID) + " > here </a> <p>"
+		"<p> Please check the details <a href=" + config.URL() + "functions/event-details/" + getEventIDString(event.ID) + " > here </a> <p>"
 
 	err = es.mailer.Send([]string{config.AllEmail()}, currentUser.Email, "Event - "+event.Title+" has been updated", body)
 
