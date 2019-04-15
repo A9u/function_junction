@@ -3,8 +3,8 @@ package team_member
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/A9u/function_junction/api"
 	"github.com/gorilla/mux"
+	"github.com/joshsoftware/function_junction/api"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"net/http"
 )
@@ -63,7 +63,6 @@ func List(service Service) http.HandlerFunc {
 		api.Success(rw, http.StatusOK, resp)
 	})
 }
-
 
 func FindListOfInviters(service Service) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -142,7 +141,7 @@ func Update(service Service) http.HandlerFunc {
 			return
 		}
 
-		resp, err := service.update(req.Context(), c , teamMemberID, teamID, eventId)
+		resp, err := service.update(req.Context(), c, teamMemberID, teamID, eventId)
 		if isBadRequest(err) {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return

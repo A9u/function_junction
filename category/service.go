@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/mongodb/mongo-go-driver/mongo"
 
-	"github.com/A9u/function_junction/db"
+	"github.com/joshsoftware/function_junction/db"
 	"go.uber.org/zap"
 )
 

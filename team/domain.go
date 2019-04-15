@@ -1,13 +1,13 @@
 package team
 
 import (
-	"github.com/A9u/function_junction/db"
+	"github.com/joshsoftware/function_junction/db"
 )
 
 type createRequest struct {
-	Name        string             `json:"name"`
-	ShowcaseUrl string             `json:"showcase_url"`
-	Description string             `json:"description"`
+	Name        string `json:"name"`
+	ShowcaseUrl string `json:"showcase_url"`
+	Description string `json:"description"`
 }
 
 type listResponse struct {
@@ -22,7 +22,7 @@ func (cr createRequest) Validate() (err error) {
 }
 
 type createResponse struct {
-  Team *db.TeamInfo `json:"team"`
+	Team *db.TeamInfo `json:"team"`
 }
 
 /*

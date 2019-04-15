@@ -9,12 +9,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/A9u/function_junction/config"
-	"github.com/A9u/function_junction/constant"
+	"github.com/joshsoftware/function_junction/config"
+	"github.com/joshsoftware/function_junction/constant"
 
-	"github.com/A9u/function_junction/app"
-	"github.com/A9u/function_junction/db"
-	"github.com/A9u/function_junction/mailer"
+	"github.com/joshsoftware/function_junction/app"
+	"github.com/joshsoftware/function_junction/db"
+	"github.com/joshsoftware/function_junction/mailer"
 	"go.uber.org/zap"
 )
 

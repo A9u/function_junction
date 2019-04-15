@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/A9u/function_junction/app"
+	"github.com/joshsoftware/function_junction/app"
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 )
@@ -14,7 +14,7 @@ type Event struct {
 	ID                primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	Title             string             `json:"title"`
 	Description       string             `json:"description"`
-	Summary			  string			 `json:"summary"`
+	Summary           string             `json:"summary"`
 	StartDateTime     time.Time          `json:"start_date_time"`
 	EndDateTime       time.Time          `json:"end_date_time"`
 	IsShowcasable     bool               `json:"is_showcasable"`
@@ -43,7 +43,7 @@ func (s *store) CreateEvent(ctx context.Context, event Event) (eventInfo EventIn
 	if event.IsIndividualEvent {
 		event.MinSize = 0
 		event.MaxSize = 0
-		if event.IsShowcasable{
+		if event.IsShowcasable {
 			event.MinSize = 1
 			event.MaxSize = 1
 		}
@@ -120,7 +120,7 @@ func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, event Ev
 	if event.IsIndividualEvent {
 		event.MinSize = 0
 		event.MaxSize = 0
-		if event.IsShowcasable{
+		if event.IsShowcasable {
 			event.MinSize = 1
 			event.MaxSize = 1
 		}

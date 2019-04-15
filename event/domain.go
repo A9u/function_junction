@@ -3,13 +3,13 @@ package event
 import (
 	"time"
 
-	"github.com/A9u/function_junction/db"
+	"github.com/joshsoftware/function_junction/db"
 )
 
 type createRequest struct {
 	Title             string    `json:"title"`
 	Description       string    `json:"description"`
-	Summary			  string	`json:"summary"`
+	Summary           string    `json:"summary"`
 	StartDateTime     time.Time `json:"start_date_time"`
 	EndDateTime       time.Time `json:"end_date_time"`
 	IsShowcasable     bool      `json:"is_showcasable"`
