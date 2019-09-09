@@ -8,13 +8,14 @@ import (
 	"github.com/A9u/function_junction/app"
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
+	"github.com/mongodb/mongo-go-driver/mongo/options"
 )
 
 type Event struct {
 	ID                primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	Title             string             `json:"title"`
 	Description       string             `json:"description"`
-	Summary			  string			 `json:"summary"`
+	Summary           string             `json:"summary"`
 	StartDateTime     time.Time          `json:"start_date_time"`
 	EndDateTime       time.Time          `json:"end_date_time"`
 	IsShowcasable     bool               `json:"is_showcasable"`
@@ -43,7 +44,7 @@ func (s *store) CreateEvent(ctx context.Context, event Event) (eventInfo EventIn
 	if event.IsIndividualEvent {
 		event.MinSize = 0
 		event.MaxSize = 0
-		if event.IsShowcasable{
+		if event.IsShowcasable {
 			event.MinSize = 1
 			event.MaxSize = 1
 		}
@@ -72,8 +73,11 @@ func (s *store) CreateEvent(ctx context.Context, event Event) (eventInfo EventIn
 }
 
 func (s *store) ListEvents(ctx context.Context) (eventsInfo []EventInfo, err error) {
+	options := options.Find()
+	options.SetSort(bson.D{{"$natural", -1}})
+
 	collection := app.GetCollection("events")
-	cur, err := collection.Find(ctx, bson.D{})
+	cur, err := collection.Find(ctx, bson.D{}, options)
 	if err != nil {
 		// TODO: use logger
 		fmt.Println("Error in find: ", err)
@@ -120,7 +124,7 @@ func (s *store) UpdateEvent(ctx context.Context, id primitive.ObjectID, event Ev
 	if event.IsIndividualEvent {
 		event.MinSize = 0
 		event.MaxSize = 0
-		if event.IsShowcasable{
+		if event.IsShowcasable {
 			event.MinSize = 1
 			event.MaxSize = 1
 		}

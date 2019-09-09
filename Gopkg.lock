@@ -333,7 +333,6 @@
     "github.com/sendgrid/sendgrid-go",
     "github.com/sendgrid/sendgrid-go/helpers/mail",
     "github.com/spf13/viper",
-    "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/mock",
     "github.com/urfave/cli",
     "github.com/urfave/negroni",

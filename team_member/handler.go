@@ -64,7 +64,6 @@ func List(service Service) http.HandlerFunc {
 	})
 }
 
-
 func FindListOfInviters(service Service) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
@@ -142,7 +141,7 @@ func Update(service Service) http.HandlerFunc {
 			return
 		}
 
-		resp, err := service.update(req.Context(), c , teamMemberID, teamID, eventId)
+		resp, err := service.update(req.Context(), c, teamMemberID, teamID, eventId)
 		if isBadRequest(err) {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return

@@ -3,10 +3,10 @@ package config
 import "fmt"
 
 type databaseConfig struct {
-	driver          string
-	host            string
-	name            string
-  //user            string
+	driver string
+	host   string
+	name   string
+	//user            string
 	//password        string
 	port            int
 	maxPoolSize     int
@@ -44,9 +44,9 @@ func (c databaseConfig) DbName() string {
 
 func newDatabaseConfig() databaseConfig {
 	return databaseConfig{
-		driver:          readEnvString("DB_DRIVER"),
-		host:            readEnvString("DB_HOST"),
-		name:            readEnvString("DB_NAME"),
+		driver: readEnvString("DB_DRIVER"),
+		host:   readEnvString("DB_HOST"),
+		name:   readEnvString("DB_NAME"),
 		//user:            readEnvString("DB_USER"),
 		//password:        readEnvString("DB_PASSWORD"),
 		port:            readEnvInt("DB_PORT"),

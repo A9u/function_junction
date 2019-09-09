@@ -9,7 +9,7 @@ import (
 type createRequest struct {
 	Title             string    `json:"title"`
 	Description       string    `json:"description"`
-	Summary			  string	`json:"summary"`
+	Summary           string    `json:"summary"`
 	StartDateTime     time.Time `json:"start_date_time"`
 	EndDateTime       time.Time `json:"end_date_time"`
 	IsShowcasable     bool      `json:"is_showcasable"`
