@@ -74,7 +74,7 @@ func (s *store) CreateEvent(ctx context.Context, event Event) (eventInfo EventIn
 
 func (s *store) ListEvents(ctx context.Context) (eventsInfo []EventInfo, err error) {
 	options := options.Find()
-	options.SetSort(bson.D{{"$natural", -1}})
+	options.SetSort(bson.D{{"startdatetime", -1}})
 
 	collection := app.GetCollection("events")
 	cur, err := collection.Find(ctx, bson.D{}, options)
