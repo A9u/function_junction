@@ -25,6 +25,7 @@ type Service interface {
 	deleteByID(ctx context.Context, teamMemberID primitive.ObjectID) (err error)
 	update(ctx context.Context, req updateRequest, teamMemberID primitive.ObjectID, teamID primitive.ObjectID, eventID primitive.ObjectID) (response updateResponse, err error)
 	findListOfInviters(ctx context.Context, eventID primitive.ObjectID) (response InviterslistResponse, err error)
+	cancelRsvp(ctx context.Context, eventId primitive.ObjectID) (err error)
 }
 
 type teamMemberService struct {
@@ -73,7 +74,7 @@ func (tms *teamMemberService) create(ctx context.Context, tm createRequest, team
 	currentUser := ctx.Value("currentUser").(db.User)
 	zeroValue, _ := primitive.ObjectIDFromHex("")
 	event, _ := tms.store.FindEventByID(ctx, eventID)
-	fmt.Println(event)
+
 	team, _ := tms.store.FindTeamByEventIDAndName(ctx, eventID, event.Title, app.GetCollection("teams"))
 	if teamID == zeroValue {
 
@@ -83,10 +84,12 @@ func (tms *teamMemberService) create(ctx context.Context, tm createRequest, team
 			TeamID:    team.ID,
 			EventID:   team.EventID,
 		})
+
 		if err != nil {
 			return
 		}
 		response.Message = "RSVP Done!"
+
 		return
 	} else {
 		err = tm.Validate()
@@ -256,4 +259,25 @@ func (tms *teamMemberService) notifyTeamMemberInvitationStatus(inviter db.User, 
 
 func getStringID(id primitive.ObjectID) string {
 	return id.Hex()
+}
+
+func (tms *teamMemberService) cancelRsvp(ctx context.Context, eventID primitive.ObjectID) (err error) {
+	currentUser := ctx.Value("currentUser").(db.User)
+
+	_, err = tms.store.FindEventByID(ctx, eventID)
+	if err != nil {
+		tms.logger.Error("Error finding event", "err", err.Error(), "event_id", eventID)
+		return errEventDoesNotExist
+	}
+
+	teamMember, err := tms.store.FindTeamMemberByInviteeIDEventID(ctx, currentUser.ID, eventID, tms.collection)
+
+	if err != nil {
+		tms.logger.Error("Error finding Team Member", "err", err.Error(), "team_member_id", currentUser.ID)
+		return errNoTeamMemberId
+	}
+
+	err = tms.deleteByID(ctx, teamMember.ID)
+
+	return err
 }
