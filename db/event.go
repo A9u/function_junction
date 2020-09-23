@@ -8,6 +8,7 @@ import (
 	"github.com/joshsoftware/function_junction/app"
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
+	"github.com/mongodb/mongo-go-driver/mongo/options"
 )
 
 type Event struct {
@@ -72,8 +73,11 @@ func (s *store) CreateEvent(ctx context.Context, event Event) (eventInfo EventIn
 }
 
 func (s *store) ListEvents(ctx context.Context) (eventsInfo []EventInfo, err error) {
+	options := options.Find()
+	options.SetSort(bson.D{{"startdatetime", -1}})
+
 	collection := app.GetCollection("events")
-	cur, err := collection.Find(ctx, bson.D{})
+	cur, err := collection.Find(ctx, bson.D{}, options)
 	if err != nil {
 		// TODO: use logger
 		fmt.Println("Error in find: ", err)
