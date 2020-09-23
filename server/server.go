@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/A9u/function_junction/config"
+	"github.com/joshsoftware/function_junction/config"
 	"github.com/urfave/negroni"
 )
 

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/A9u/function_junction/app"
-	"github.com/A9u/function_junction/constant"
+	"github.com/joshsoftware/function_junction/app"
+	"github.com/joshsoftware/function_junction/constant"
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"

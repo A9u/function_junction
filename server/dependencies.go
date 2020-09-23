@@ -1,13 +1,13 @@
 package server
 
 import (
-	"github.com/A9u/function_junction/app"
-	"github.com/A9u/function_junction/category"
-	"github.com/A9u/function_junction/db"
-	"github.com/A9u/function_junction/event"
-	"github.com/A9u/function_junction/mailer"
-	"github.com/A9u/function_junction/team"
-	"github.com/A9u/function_junction/team_member"
+	"github.com/joshsoftware/function_junction/app"
+	"github.com/joshsoftware/function_junction/category"
+	"github.com/joshsoftware/function_junction/db"
+	"github.com/joshsoftware/function_junction/event"
+	"github.com/joshsoftware/function_junction/mailer"
+	"github.com/joshsoftware/function_junction/team"
+	"github.com/joshsoftware/function_junction/team_member"
 )
 
 type dependencies struct {

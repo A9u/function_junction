@@ -1,6 +1,6 @@
 package category
 
-import "github.com/A9u/function_junction/db"
+import "github.com/joshsoftware/function_junction/db"
 
 type updateRequest struct {
 	Name string      `json:"name"`

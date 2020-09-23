@@ -3,7 +3,7 @@ package mailer
 import (
 	"fmt"
 
-	"github.com/A9u/function_junction/config"
+	"github.com/joshsoftware/function_junction/config"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
