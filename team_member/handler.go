@@ -159,3 +159,22 @@ func Update(service Service) http.HandlerFunc {
 func isBadRequest(err error) bool {
 	return err == errEmptyID || err == errEmptyEmail
 }
+
+func CancelRsvp(service Service) http.HandlerFunc {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		eventId, err := primitive.ObjectIDFromHex(vars["event_id"])
+		if err != nil {
+			api.Error(rw, http.StatusInternalServerError, api.Response{Message: err.Error()})
+			return
+		}
+
+		err = service.cancelRsvp(req.Context(), eventId)
+		if err != nil {
+			api.Error(rw, http.StatusInternalServerError, api.Response{Message: err.Error()})
+			return
+		}
+
+		api.Success(rw, http.StatusOK, api.Response{Message: "Cancelled Rsvp successfully!"})
+	})
+}
