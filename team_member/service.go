@@ -25,6 +25,7 @@ type Service interface {
 	deleteByID(ctx context.Context, teamMemberID primitive.ObjectID) (err error)
 	update(ctx context.Context, req updateRequest, teamMemberID primitive.ObjectID, teamID primitive.ObjectID, eventID primitive.ObjectID) (response updateResponse, err error)
 	findListOfInviters(ctx context.Context, eventID primitive.ObjectID) (response InviterslistResponse, err error)
+	reject(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID) (message string, err error)
 }
 
 type teamMemberService struct {
@@ -69,14 +70,12 @@ func (tms *teamMemberService) findListOfInviters(ctx context.Context, eventID pr
 }
 
 func (tms *teamMemberService) create(ctx context.Context, tm createRequest, teamID primitive.ObjectID, eventID primitive.ObjectID) (response createResponse, err error) {
-
 	currentUser := ctx.Value("currentUser").(db.User)
 	zeroValue, _ := primitive.ObjectIDFromHex("")
 	event, _ := tms.store.FindEventByID(ctx, eventID)
 	fmt.Println(event)
 	team, _ := tms.store.FindTeamByEventIDAndName(ctx, eventID, event.Title, app.GetCollection("teams"))
 	if teamID == zeroValue {
-
 		_, err = tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
 			InviteeID: currentUser.ID,
 			Status:    constant.Accepted,
@@ -256,4 +255,25 @@ func (tms *teamMemberService) notifyTeamMemberInvitationStatus(inviter db.User, 
 
 func getStringID(id primitive.ObjectID) string {
 	return id.Hex()
+}
+
+func (tms *teamMemberService) reject(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID) (message string, err error) {
+	currentUser := ctx.Value("currentUser").(db.User)
+	zeroValue, _ := primitive.ObjectIDFromHex("")
+	event, _ := tms.store.FindEventByID(ctx, eventID)
+	team, _ := tms.store.FindTeamByEventIDAndName(ctx, eventID, event.Title, app.GetCollection("teams"))
+
+	if teamID == zeroValue {
+		_, err = tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
+			InviteeID: currentUser.ID,
+			Status:    constant.Rejected,
+			TeamID:    team.ID,
+			EventID:   team.EventID,
+		})
+		if err != nil {
+			return
+		}
+		message = "Response recorded as NO"
+	}
+	return
 }

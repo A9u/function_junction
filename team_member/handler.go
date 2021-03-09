@@ -16,7 +16,6 @@ func Create(service Service) http.HandlerFunc {
 		queryParams := mux.Vars(req)
 		teamID, err := primitive.ObjectIDFromHex(queryParams["team_id"])
 		eventID, err1 := primitive.ObjectIDFromHex(queryParams["event_id"])
-		fmt.Println("recieved params teamid", teamID)
 		err = json.NewDecoder(req.Body).Decode(&c)
 		if err != nil || err1 != nil {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
@@ -153,6 +152,41 @@ func Update(service Service) http.HandlerFunc {
 		}
 
 		api.Success(rw, http.StatusOK, resp)
+	})
+}
+
+func Reject(service Service) http.HandlerFunc {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		queryParams := mux.Vars(req)
+		var teamID primitive.ObjectID
+		var err error
+
+		if queryParams["team_id"] != ""{
+			teamID, err = primitive.ObjectIDFromHex(queryParams["team_id"])
+			if err != nil {
+				api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
+				return
+			}
+		}
+
+		eventID, err := primitive.ObjectIDFromHex(queryParams["event_id"])
+		if err != nil {
+			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
+			return
+		}
+
+		message, err := service.reject(req.Context(), teamID, eventID)
+		if isBadRequest(err) {
+			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
+			return
+		}
+
+		if err != nil {
+			api.Error(rw, http.StatusInternalServerError, api.Response{Message: err.Error()})
+			return
+		}
+
+		api.Success(rw, http.StatusCreated, message)
 	})
 }
 
