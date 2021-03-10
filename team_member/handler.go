@@ -3,10 +3,11 @@ package team_member
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/A9u/function_junction/api"
 	"github.com/gorilla/mux"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
-	"net/http"
 )
 
 func Create(service Service) http.HandlerFunc {
@@ -161,7 +162,7 @@ func Reject(service Service) http.HandlerFunc {
 		var teamID primitive.ObjectID
 		var err error
 
-		if queryParams["team_id"] != ""{
+		if queryParams["team_id"] != "" {
 			teamID, err = primitive.ObjectIDFromHex(queryParams["team_id"])
 			if err != nil {
 				api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
@@ -176,6 +177,41 @@ func Reject(service Service) http.HandlerFunc {
 		}
 
 		message, err := service.reject(req.Context(), teamID, eventID)
+		if isBadRequest(err) {
+			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
+			return
+		}
+
+		if err != nil {
+			api.Error(rw, http.StatusInternalServerError, api.Response{Message: err.Error()})
+			return
+		}
+
+		api.Success(rw, http.StatusCreated, message)
+	})
+}
+
+func Accept(service Service) http.HandlerFunc {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		queryParams := mux.Vars(req)
+		var teamID primitive.ObjectID
+		var err error
+
+		if queryParams["team_id"] != "" {
+			teamID, err = primitive.ObjectIDFromHex(queryParams["team_id"])
+			if err != nil {
+				api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
+				return
+			}
+		}
+
+		eventID, err := primitive.ObjectIDFromHex(queryParams["event_id"])
+		if err != nil {
+			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
+			return
+		}
+
+		message, err := service.accept(req.Context(), teamID, eventID)
 		if isBadRequest(err) {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return

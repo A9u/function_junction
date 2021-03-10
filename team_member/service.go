@@ -277,3 +277,24 @@ func (tms *teamMemberService) reject(ctx context.Context, teamID primitive.Objec
 	}
 	return
 }
+
+func (tms *teamMemberService) accept(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID) (message string, err error) {
+	currentUser := ctx.Value("currentUser").(db.User)
+	zeroValue, _ := primitive.ObjectIDFromHex("")
+	event, _ := tms.store.FindEventByID(ctx, eventID)
+	team, _ := tms.store.FindTeamByEventIDAndName(ctx, eventID, event.Title, app.GetCollection("teams"))
+
+	if teamID == zeroValue {
+		_, err = tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
+			InviteeID: currentUser.ID,
+			Status:    constant.Accepted,
+			TeamID:    team.ID,
+			EventID:   team.EventID,
+		})
+		if err != nil {
+			return
+		}
+		message = "Response recorded as YES"
+	}
+	return
+}
