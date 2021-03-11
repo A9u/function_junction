@@ -1,4 +1,4 @@
-package category
+package team
 
 import (
 	"encoding/json"
@@ -6,18 +6,21 @@ import (
 
 	"github.com/A9u/function_junction/api"
 	"github.com/gorilla/mux"
+	"github.com/mongodb/mongo-go-driver/bson/primitive"
 )
 
 func Create(service Service) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		eventID, err := primitive.ObjectIDFromHex(vars["event_id"])
 		var c createRequest
-		err := json.NewDecoder(req.Body).Decode(&c)
+		err = json.NewDecoder(req.Body).Decode(&c)
 		if err != nil {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return
 		}
 
-		err = service.create(req.Context(), c)
+		response, err := service.create(req.Context(), c, eventID)
 		if isBadRequest(err) {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return
@@ -28,33 +31,16 @@ func Create(service Service) http.HandlerFunc {
 			return
 		}
 
-		api.Success(rw, http.StatusCreated, api.Response{Message: "Created Successfully"})
+		api.Success(rw, http.StatusCreated, response)
 	})
 }
 
 func List(service Service) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		resp, err := service.list(req.Context())
-		if err == errNoCategories {
-			api.Error(rw, http.StatusNotFound, api.Response{Message: err.Error()})
-			return
-		}
-		if err != nil {
-			api.Error(rw, http.StatusInternalServerError, api.Response{Message: err.Error()})
-			return
-		}
-
-		api.Success(rw, http.StatusOK, resp)
-	})
-}
-
-func FindByID(service Service) http.HandlerFunc {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
-
-		resp, err := service.findByID(req.Context(), vars["category_id"])
-
-		if err == errNoCategoryId {
+		eventID, err := primitive.ObjectIDFromHex(vars["event_id"])
+		resp, err := service.list(req.Context(), eventID)
+		if err == errNoTeams {
 			api.Error(rw, http.StatusNotFound, api.Response{Message: err.Error()})
 			return
 		}
@@ -70,30 +56,34 @@ func FindByID(service Service) http.HandlerFunc {
 func DeleteByID(service Service) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
-
-		err := service.deleteByID(req.Context(), vars["category_id"])
-		if err == errNoCategoryId {
-			api.Error(rw, http.StatusNotFound, api.Response{Message: err.Error()})
+		id, err := primitive.ObjectIDFromHex(vars["team_id"])
+		if err != nil {
+			api.Error(rw, http.StatusInternalServerError, api.Response{Message: err.Error()})
 		}
+		err = service.deleteByID(req.Context(), id)
 		if err != nil {
 			api.Error(rw, http.StatusInternalServerError, api.Response{Message: err.Error()})
 			return
 		}
-
 		api.Success(rw, http.StatusOK, api.Response{Message: "Deleted Successfully"})
 	})
 }
 
 func Update(service Service) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		var c updateRequest
-		err := json.NewDecoder(req.Body).Decode(&c)
+		vars := mux.Vars(req)
+		id, err := primitive.ObjectIDFromHex(vars["team_id"])
+		if err != nil {
+			api.Error(rw, http.StatusInternalServerError, api.Response{Message: err.Error()})
+		}
+
+		var c createRequest
+		err = json.NewDecoder(req.Body).Decode(&c)
 		if err != nil {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return
 		}
-
-		err = service.update(req.Context(), c)
+		resp, err := service.update(req.Context(), c, id)
 		if isBadRequest(err) {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return
@@ -104,7 +94,7 @@ func Update(service Service) http.HandlerFunc {
 			return
 		}
 
-		api.Success(rw, http.StatusOK, api.Response{Message: "Updated Successfully"})
+		api.Success(rw, http.StatusOK, resp)
 	})
 }
 

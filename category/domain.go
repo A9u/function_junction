@@ -1,14 +1,16 @@
 package category
 
-import "github.com/joshsoftware/golang-boilerplate/db"
+import "github.com/A9u/function_junction/db"
 
 type updateRequest struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	Name string      `json:"name"`
+	Type string      `json:"type"`
+	Set  db.Category `json:"$set"`
 }
 
 type createRequest struct {
 	Name string `json:"name"`
+	Type string `json:"type"`
 }
 
 type findByIDResponse struct {
@@ -16,7 +18,7 @@ type findByIDResponse struct {
 }
 
 type listResponse struct {
-	Categories []db.Category `json:"categories"`
+	Categories []*db.Category `json:"categories"`
 }
 
 func (cr createRequest) Validate() (err error) {
@@ -27,9 +29,6 @@ func (cr createRequest) Validate() (err error) {
 }
 
 func (ur updateRequest) Validate() (err error) {
-	if ur.ID == "" {
-		return errEmptyID
-	}
 	if ur.Name == "" {
 		return errEmptyName
 	}

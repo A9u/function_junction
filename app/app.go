@@ -1,16 +1,19 @@
 package app
 
 import (
+	"context"
 	"time"
 
-	"github.com/jmoiron/sqlx"
-	"github.com/joshsoftware/golang-boilerplate/config"
+	"github.com/A9u/function_junction/config"
+	"github.com/mongodb/mongo-go-driver/mongo"
 	"go.uber.org/zap"
 )
 
 var (
-	db     *sqlx.DB
+	db     *mongo.Database
+	client *mongo.Client
 	logger *zap.SugaredLogger
+	ctx    context.Context
 )
 
 func Init() {
@@ -33,24 +36,32 @@ func InitLogger() {
 
 func initDB() (err error) {
 	dbConfig := config.Database()
-
-	db, err = sqlx.Open(dbConfig.Driver(), dbConfig.ConnectionURL())
+	client, err := mongo.NewClient(dbConfig.ConnectionURL())
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	err = client.Connect(ctx)
 	if err != nil {
 		return
 	}
-
-	if err = db.Ping(); err != nil {
-		return
-	}
-
-	db.SetMaxIdleConns(dbConfig.MaxPoolSize())
-	db.SetMaxOpenConns(dbConfig.MaxOpenConns())
-	db.SetConnMaxLifetime(time.Duration(dbConfig.MaxLifeTimeMins()) * time.Minute)
+	db = client.Database(dbConfig.DbName())
+	/*
+		if err = client.Ping(ctx, nil); err != nil {
+			return
+		}
+	*/
 
 	return
 }
 
-func GetDB() *sqlx.DB {
+func GetCollection(name string) *mongo.Collection {
+	collection := db.Collection(name)
+	return collection
+}
+
+func GetDB() *mongo.Database {
 	return db
 }
 
@@ -60,5 +71,5 @@ func GetLogger() *zap.SugaredLogger {
 
 func Close() {
 	logger.Sync()
-	db.Close()
+	client.Disconnect(nil)
 }
