@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/A9u/function_junction/app"
+	"github.com/joshsoftware/function_junction/app"
 )
 
 type Response struct {

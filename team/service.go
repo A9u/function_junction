@@ -3,7 +3,7 @@ package team
 import (
 	"context"
 
-	"github.com/A9u/function_junction/db"
+	"github.com/joshsoftware/function_junction/db"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"go.uber.org/zap"

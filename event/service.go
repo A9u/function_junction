@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/A9u/function_junction/config"
-	"github.com/A9u/function_junction/db"
-	"github.com/A9u/function_junction/mailer"
+	"github.com/joshsoftware/function_junction/config"
+	"github.com/joshsoftware/function_junction/db"
+	"github.com/joshsoftware/function_junction/mailer"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"go.uber.org/zap"
