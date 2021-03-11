@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/joshsoftware/golang-boilerplate/config"
+	"github.com/A9u/function_junction/config"
 	"github.com/urfave/negroni"
 )
 
 func StartAPIServer() {
 	port := config.AppPort()
-	server := negroni.Classic()
 
+	server := negroni.Classic()
 	dependencies, err := initDependencies()
+	server.Use(negroni.HandlerFunc(AuthMiddleware))
 	if err != nil {
 		panic(err)
 	}
