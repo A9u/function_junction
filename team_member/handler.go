@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/A9u/function_junction/api"
 	"github.com/gorilla/mux"
+	"github.com/joshsoftware/function_junction/api"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 )
 
@@ -176,7 +176,14 @@ func Reject(service Service) http.HandlerFunc {
 			return
 		}
 
-		message, err := service.reject(req.Context(), teamID, eventID)
+		email := queryParams["email"]
+
+		if email == "" {
+			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
+			return
+		}
+
+		message, err := service.reject(req.Context(), teamID, eventID, email)
 		if isBadRequest(err) {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return
@@ -211,7 +218,14 @@ func Accept(service Service) http.HandlerFunc {
 			return
 		}
 
-		message, err := service.accept(req.Context(), teamID, eventID)
+		email := queryParams["email"]
+
+		if email == "" {
+			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
+			return
+		}
+
+		message, err := service.accept(req.Context(), teamID, eventID, email)
 		if isBadRequest(err) {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
 			return

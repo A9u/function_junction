@@ -9,12 +9,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/A9u/function_junction/config"
-	"github.com/A9u/function_junction/constant"
+	"github.com/joshsoftware/function_junction/config"
+	"github.com/joshsoftware/function_junction/constant"
 
-	"github.com/A9u/function_junction/app"
-	"github.com/A9u/function_junction/db"
-	"github.com/A9u/function_junction/mailer"
+	"github.com/joshsoftware/function_junction/app"
+	"github.com/joshsoftware/function_junction/db"
+	"github.com/joshsoftware/function_junction/mailer"
 	"go.uber.org/zap"
 )
 
@@ -25,7 +25,8 @@ type Service interface {
 	deleteByID(ctx context.Context, teamMemberID primitive.ObjectID) (err error)
 	update(ctx context.Context, req updateRequest, teamMemberID primitive.ObjectID, teamID primitive.ObjectID, eventID primitive.ObjectID) (response updateResponse, err error)
 	findListOfInviters(ctx context.Context, eventID primitive.ObjectID) (response InviterslistResponse, err error)
-	reject(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID) (message string, err error)
+	reject(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID, email string) (message string, err error)
+	accept(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID, email string) (response createResponse, err error)
 }
 
 type teamMemberService struct {
@@ -36,6 +37,18 @@ type teamMemberService struct {
 	userCollection  *mongo.Collection
 	eventCollection *mongo.Collection
 	mailer          mailer.MailerService
+}
+
+func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection, t *mongo.Collection, u *mongo.Collection, e *mongo.Collection, m mailer.MailerService) Service {
+	return &teamMemberService{
+		store:           s,
+		logger:          l,
+		collection:      c,
+		teamCollection:  t,
+		userCollection:  u,
+		eventCollection: e,
+		mailer:          m,
+	}
 }
 
 func (tms *teamMemberService) list(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID) (response listResponse, err error) {
@@ -229,18 +242,6 @@ func (tms *teamMemberService) deleteByID(ctx context.Context, id primitive.Objec
 	return
 }
 
-func NewService(s db.Storer, l *zap.SugaredLogger, c *mongo.Collection, t *mongo.Collection, u *mongo.Collection, e *mongo.Collection, m mailer.MailerService) Service {
-	return &teamMemberService{
-		store:           s,
-		logger:          l,
-		collection:      c,
-		teamCollection:  t,
-		userCollection:  u,
-		eventCollection: e,
-		mailer:          m,
-	}
-}
-
 func (tms *teamMemberService) notifyTeamMembers(invitees []string, team *db.Team, currentUser db.User, event db.EventInfo) {
 	body := "I have invited you to join my team <b>" + team.Name + "</b> for <b>" + event.Title + "</b> - " + event.Summary + ". It will be held from " + event.StartDateTime.Format(time.ANSIC) + " to " + event.EndDateTime.Format(time.ANSIC) + " at " + event.Venue + ". " +
 		"<p> Please click <a href=" + config.URL() + "functions/event-details/" + getStringID(event.ID) + " > here </a> to see more details. <p>"
@@ -257,15 +258,35 @@ func getStringID(id primitive.ObjectID) string {
 	return id.Hex()
 }
 
-func (tms *teamMemberService) reject(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID) (message string, err error) {
+func (tms *teamMemberService) reject(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID, email string) (message string, err error) {
 	currentUser := ctx.Value("currentUser").(db.User)
 	zeroValue, _ := primitive.ObjectIDFromHex("")
 	event, _ := tms.store.FindEventByID(ctx, eventID)
 	team, _ := tms.store.FindTeamByEventIDAndName(ctx, eventID, event.Title, app.GetCollection("teams"))
 
+	var userID primitive.ObjectID
+	var user db.User
+
+	if currentUser.ID.IsZero() {
+		user, err = db.FindUserByEmail(ctx, email, tms.userCollection)
+		if err != nil {
+			message = "User not found"
+			return
+		}
+		if user.ID.IsZero() {
+			message = "User not found"
+			return
+		} else {
+			userID = user.ID
+		}
+
+	} else {
+		userID = currentUser.ID
+	}
+
 	if teamID == zeroValue {
 		_, err = tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
-			InviteeID: currentUser.ID,
+			InviteeID: userID,
 			Status:    constant.Rejected,
 			TeamID:    team.ID,
 			EventID:   team.EventID,
@@ -278,15 +299,34 @@ func (tms *teamMemberService) reject(ctx context.Context, teamID primitive.Objec
 	return
 }
 
-func (tms *teamMemberService) accept(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID) (message string, err error) {
+func (tms *teamMemberService) accept(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID, email string) (message string, err error) {
 	currentUser := ctx.Value("currentUser").(db.User)
 	zeroValue, _ := primitive.ObjectIDFromHex("")
 	event, _ := tms.store.FindEventByID(ctx, eventID)
 	team, _ := tms.store.FindTeamByEventIDAndName(ctx, eventID, event.Title, app.GetCollection("teams"))
 
+	var userID primitive.ObjectID
+	user, err := db.FindUserByEmail(ctx, email, tms.userCollection)
+
+	if err != nil {
+		message = "User not found"
+		return message, err
+	}
+
+	if currentUser.ID.IsZero() {
+		if user.ID.IsZero() {
+			message = "User not found"
+			return
+		} else {
+			userID = user.ID
+		}
+	} else {
+		userID = currentUser.ID
+	}
+
 	if teamID == zeroValue {
 		_, err = tms.store.CreateTeamMember(ctx, tms.collection, &db.TeamMember{
-			InviteeID: currentUser.ID,
+			InviteeID: userID,
 			Status:    constant.Accepted,
 			TeamID:    team.ID,
 			EventID:   team.EventID,
