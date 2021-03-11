@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/A9u/function_junction/api"
-	"github.com/A9u/function_junction/config"
-	"github.com/A9u/function_junction/event"
-	"github.com/A9u/function_junction/team"
-	"github.com/A9u/function_junction/team_member"
 	"github.com/gorilla/mux"
+	"github.com/joshsoftware/function_junction/api"
+	"github.com/joshsoftware/function_junction/config"
+	"github.com/joshsoftware/function_junction/event"
+	"github.com/joshsoftware/function_junction/team"
+	"github.com/joshsoftware/function_junction/team_member"
 )
 
 const (
@@ -28,6 +28,8 @@ func initRouter(dep dependencies) (router *mux.Router) {
 	router.HandleFunc("/events/{event_id}", event.DeleteByID(dep.EventService)).Methods(http.MethodDelete).Headers(versionHeader, v1)
 	router.HandleFunc("/events/{event_id}", event.Update(dep.EventService)).Methods(http.MethodPut).Headers(versionHeader, v1)
 	router.HandleFunc("/events/{event_id}/rsvp", team_member.Create(dep.TeamMemberService)).Methods(http.MethodPost).Headers(versionHeader, v1)
+	router.HandleFunc("/events/{event_id}/rsvp/no", team_member.Reject(dep.TeamMemberService)).Methods(http.MethodGet).Headers(versionHeader, v1)
+	router.HandleFunc("/events/{event_id}/rsvp/yes", team_member.Accept(dep.TeamMemberService)).Methods(http.MethodGet).Headers(versionHeader, v1)
 
 	router.HandleFunc("/events/{event_id}/teams", team.Create(dep.TeamService)).Methods(http.MethodPost).Headers(versionHeader, v1)
 	router.HandleFunc("/events/{event_id}/teams", team.List(dep.TeamService)).Methods(http.MethodGet).Headers(versionHeader, v1)

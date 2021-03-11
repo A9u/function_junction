@@ -1,7 +1,7 @@
 package team
 
 import (
-	"github.com/A9u/function_junction/db"
+	"github.com/joshsoftware/function_junction/db"
 )
 
 type createRequest struct {

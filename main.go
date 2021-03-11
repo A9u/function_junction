@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/A9u/function_junction/app"
-	"github.com/A9u/function_junction/config"
-	"github.com/A9u/function_junction/server"
+	"github.com/joshsoftware/function_junction/app"
+	"github.com/joshsoftware/function_junction/config"
+	"github.com/joshsoftware/function_junction/server"
 	"github.com/urfave/cli"
 )
 
