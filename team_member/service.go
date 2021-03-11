@@ -26,7 +26,7 @@ type Service interface {
 	update(ctx context.Context, req updateRequest, teamMemberID primitive.ObjectID, teamID primitive.ObjectID, eventID primitive.ObjectID) (response updateResponse, err error)
 	findListOfInviters(ctx context.Context, eventID primitive.ObjectID) (response InviterslistResponse, err error)
 	reject(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID, email string) (message string, err error)
-	accept(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID, email string) (response createResponse, err error)
+	accept(ctx context.Context, teamID primitive.ObjectID, eventID primitive.ObjectID, email string) (message string, err error)
 }
 
 type teamMemberService struct {

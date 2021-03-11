@@ -176,7 +176,7 @@ func Reject(service Service) http.HandlerFunc {
 			return
 		}
 
-		email := queryParams["email"]
+		email := req.FormValue("email")
 
 		if email == "" {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
@@ -218,7 +218,7 @@ func Accept(service Service) http.HandlerFunc {
 			return
 		}
 
-		email := queryParams["email"]
+		email := req.FormValue("email")
 
 		if email == "" {
 			api.Error(rw, http.StatusBadRequest, api.Response{Message: err.Error()})
